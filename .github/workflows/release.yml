@@ -25,10 +25,8 @@ jobs:
       - name: Build Lambda Artefact
         run: zip brontobytes-aws-ingestion-python log_forwarder/*
         shell: bash
-
-      - name: Tag & Commit Artefact
-        run: git add brontobytes-aws-ingestion-python.zip; git commit -m 'adding new artefact'
-      - name: Create git tag
-        run: git tag ${{ env.VERSION }}
-      - name: Push git tag
-        run: git push origin ${{ env.VERSION }}
+      - uses: actions/upload-artifact@v4
+        id: artifact-upload-step
+        with:
+          name: brontobytes-aws-ingestion-python
+          path: brontobytes-aws-ingestion-python.zip
