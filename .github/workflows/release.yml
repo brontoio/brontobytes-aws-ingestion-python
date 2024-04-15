@@ -21,9 +21,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Build Lambda Artefact
-        run: zip lambda-aws-ingestion-python log_forwarder
-      - name: Tag & Release Version
-        uses: softprops/action-gh-release@v2
-        with:
-          files: lambda-aws-ingestion-python.zip
+        run: zip brontobytes-aws-ingestion-python log_forwarder/*
+        shell: bash
+
+      - name: Tag & Commit Artefact
+        run: git commit -m 'adding new artefact' brontobytes-aws-ingestion-python.zip
+      - name: Create git tag
+        run: git tag ${{ env.VERSION }}
+      - name: Push git tag
+        run: git push origin ${{ env.VERSION }}
