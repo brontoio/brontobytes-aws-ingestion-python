@@ -2,7 +2,7 @@ name: Release as AWS Lambda artefact
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "LOG-223" ]
 
 jobs:
   deployment:
@@ -26,6 +26,4 @@ jobs:
       - name: Tag & Release Version
         uses: softprops/action-gh-release@v2
         with:
-          version: ${{ env.VERSION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
           files: lambda-aws-ingestion-python.zip
