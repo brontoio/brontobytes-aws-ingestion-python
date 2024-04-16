@@ -25,7 +25,13 @@ jobs:
       - name: Build Lambda Artefact
         run: zip brontobytes-aws-ingestion-python log_forwarder/*
         shell: bash
-      - name: Release
+      - name: Tag & Release Version
+        if: success()
+        uses: logchatio/logchat-actions/release@main
+        with:
+          version: ${{ env.VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release Lambda Artefact
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
