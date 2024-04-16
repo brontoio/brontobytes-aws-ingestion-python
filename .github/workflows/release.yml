@@ -25,8 +25,8 @@ jobs:
       - name: Build Lambda Artefact
         run: zip brontobytes-aws-ingestion-python log_forwarder/*
         shell: bash
-      - uses: actions/upload-artifact@v4
-        id: artifact-upload-step
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: brontobytes-aws-ingestion-python
-          path: brontobytes-aws-ingestion-python.zip
+          files: brontobytes-aws-ingestion-python.zip
