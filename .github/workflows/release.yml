@@ -2,7 +2,7 @@ name: Release as AWS Lambda artefact
 
 on:
   push:
-    branches: [ "LOG-223" ]
+    branches: [ "main" ]
 
 jobs:
   deployment:
