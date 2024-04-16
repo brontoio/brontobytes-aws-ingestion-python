@@ -21,11 +21,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build Lambda Artefact
-        run: zip lambda-aws-ingestion-python log_forwarder
+
       - name: Tag & Release Version
-        uses: softprops/action-gh-release@v2
+        if: success()
+        uses: logchatio/logchat-actions/release@main
         with:
           version: ${{ env.VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          files: lambda-aws-ingestion-python.zip
+
+      - name: Build Lambda Artefact
+        run: zip brontobytes-aws-ingestion-python log_forwarder/*
+        shell: bash
+
+      - name: Release Lambda Artefact
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: brontobytes-aws-ingestion-python.zip
