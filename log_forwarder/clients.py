@@ -24,11 +24,12 @@ class BrontoClient:
     def send_data(self, filepath):
         headers = {
             'Content-Encoding': 'gzip',
+            'Content-Type': 'text/plain',
             'x-bronto-api-key': self.api_key,
             'x-bronto-log-name': self.log_name,
             'x-bronto-logset': self.log_set
         }
-        with open(filepath, 'r') as f:
-            request = urllib.request.Request(self.ingestion_endpoint, data=f.buffer, headers=headers)
+        with open(filepath, 'rb') as f:
+            request = urllib.request.Request(self.ingestion_endpoint, data=f.read(), headers=headers)
             response = urllib.request.urlopen(request)
             return response

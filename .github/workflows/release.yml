@@ -37,7 +37,7 @@ jobs:
           release_name: v${{ env.VERSION }}
 
       - name: Build Lambda Artefact
-        run: zip brontobytes-aws-ingestion-python log_forwarder/*
+        run: cd log_forwarder && zip brontobytes-aws-ingestion-python *
         shell: bash
 
       - name: Release Lambda Artefact
