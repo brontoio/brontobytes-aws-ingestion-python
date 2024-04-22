@@ -22,12 +22,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Tag & Release Version
+      - name: Tag Version
         if: success()
-        uses: logchatio/logchat-actions/release@main
+        run: git tag ${{ env.VERSION }} && git push --tags
+        shell: bash
+
+      - name: Create Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: ${{ env.VERSION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.VERSION }}
+          release_name: v${{ env.VERSION }}
 
       - name: Build Lambda Artefact
         run: zip brontobytes-aws-ingestion-python log_forwarder/*
