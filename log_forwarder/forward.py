@@ -3,7 +3,7 @@ import logging
 from config import Config, DestinationConfig
 from data_retriever import DataRetrieverFactory
 from parser import ParserFactory
-from clients import BrontoClient
+from clients import BrontoClient, Batch
 from logfile import LogFileFactory
 
 logger = logging.getLogger()
@@ -27,11 +27,16 @@ def forward_logs(event, _):
     logger.info('Destination information retrieved. log_name=%s, log_set=%s, log_type=%s', log_name, log_set,
                 log_type)
 
-    parser = ParserFactory.get_parser(log_type)
-    logger.info('Parser selected. parser=%s', type(parser).__name__)
     input_file = LogFileFactory.get_log_file(log_type, config.filepath)
     logger.info('Input file type detected. input_file=%s', type(input_file).__name__)
-    parsed_file = parser.parse_file(input_file)
-
+    parser = ParserFactory.get_parser(log_type, input_file)
+    logger.info('Parser selected. parser=%s', type(parser).__name__)
     bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, log_name, log_set)
-    bronto_client.send_data(parsed_file)
+    batch = Batch()
+    for line in parser.get_parsed_lines():
+        batch.add(line)
+        if batch.get_batch_size() > dest_config.max_batch_size:
+            bronto_client.send_data(batch)
+            batch = Batch()
+    if batch.get_batch_size() > 0:
+        bronto_client.send_data(batch)
