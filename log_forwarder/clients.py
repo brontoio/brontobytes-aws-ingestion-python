@@ -67,6 +67,6 @@ class BrontoClient:
     def send_data(self, batch):
         data = '\n'.join(batch.get_data())
         compressed_data = gzip.compress(data.encode())
-        logger.info('Batch compressed. max_batch_size=%s, batch_size=%s, compressed_batch_size=%s',
-                    batch.get_batch_size(), len(compressed_data))
+        logger.info('Batch compressed. batch_size=%s, compressed_batch_size=%s',batch.get_batch_size(),
+                    len(compressed_data))
         self._send_batch(compressed_data)
