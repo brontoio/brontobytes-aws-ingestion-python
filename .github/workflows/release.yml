@@ -40,9 +40,15 @@ jobs:
         run: cd log_forwarder && zip -r ../brontobytes-aws-ingestion-python *
         shell: bash
 
+      - name: Compute package hash
+        run: openssl dgst -sha256 -binary brontobytes-aws-ingestion-python.zip | openssl enc -base64 > brontobytes-aws-ingestion-python.zip.sha256
+        shell: bash
+
       - name: Release Lambda Artefact
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ env.VERSION }}
-          files: brontobytes-aws-ingestion-python.zip
+          files: |
+            brontobytes-aws-ingestion-python.zip
+            brontobytes-aws-ingestion-python.zip.sha256
