@@ -41,7 +41,7 @@ jobs:
         shell: bash
 
       - name: Compute package hash
-        run: openssl dgst -sha256 -binary brontobytes-aws-ingestion-python.zip | openssl enc -base64 > brontobytes-aws-ingestion-python.zip.sha256
+        run: openssl dgst -sha256 -binary brontobytes-aws-ingestion-python.zip | openssl enc -base64 > brontobytes-aws-ingestion-python.zip.b64sha256
         shell: bash
 
       - name: Release Lambda Artefact
@@ -51,4 +51,4 @@ jobs:
           tag_name: ${{ env.VERSION }}
           files: |
             brontobytes-aws-ingestion-python.zip
-            brontobytes-aws-ingestion-python.zip.sha256
+            brontobytes-aws-ingestion-python.zip.b64sha256
