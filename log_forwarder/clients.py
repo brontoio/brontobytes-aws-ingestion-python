@@ -1,3 +1,5 @@
+import time
+
 import boto3
 import urllib.request
 import gzip
@@ -56,10 +58,12 @@ class BrontoClient:
         attempt = 0
         max_attempts = 5
         with urllib.request.urlopen(request) as resp:
-            if resp.status != 201 and attempt < max_attempts:
+            if resp.status != 200 and attempt < max_attempts:
                 attempt += 1
+                delay_sec = attempt * 10
                 logger.warning('Data sending failed. attempt=%s, max_attempts=%s, status=%s, reason=%s',
                                attempt, max_attempts, resp.status, resp.reason)
+                time.sleep(delay_sec)
                 self._send_batch(compressed_batch)
 
     def send_data(self, line):
