@@ -1,5 +1,4 @@
 import logging
-import gzip
 
 from config import Config, DestinationConfig
 from data_retriever import DataRetrieverFactory
