@@ -66,11 +66,9 @@ class BrontoClient:
                 time.sleep(delay_sec)
                 self._send_batch(compressed_batch)
 
-    def send_data(self, line):
-        self.batch.add(line)
-        if self.batch.get_batch_size() > self.max_batch_size:
-            data = '\n'.join(self.batch.get_data())
-            compressed_data = gzip.compress(data.encode())
-            logger.info('Batch compressed. max_batch_size=%s, batch_size=%s, compressed_batch_size=%s',
-                        self.max_batch_size, self.batch.get_batch_size(), len(compressed_data))
-            self._send_batch(compressed_data)
+    def send_data(self, batch):
+        data = '\n'.join(batch.get_data())
+        compressed_data = gzip.compress(data.encode())
+        logger.info('Batch compressed. max_batch_size=%s, batch_size=%s, compressed_batch_size=%s',
+                    self.max_batch_size, batch.get_batch_size(), len(compressed_data))
+        self._send_batch(compressed_data)
