@@ -38,13 +38,11 @@ class Batch:
 
 class BrontoClient:
 
-    def __init__(self, api_key, ingestion_endpoint, log_name, log_set, max_batch_size):
+    def __init__(self, api_key, ingestion_endpoint, log_name, log_set):
         self.api_key = api_key
         self.log_name = log_name
         self.log_set = log_set
         self.ingestion_endpoint = ingestion_endpoint
-        self.batch = Batch()
-        self.max_batch_size = max_batch_size
         self.headers = {
             'Content-Encoding': 'gzip',
             'Content-Type': 'text/plain',
@@ -70,5 +68,5 @@ class BrontoClient:
         data = '\n'.join(batch.get_data())
         compressed_data = gzip.compress(data.encode())
         logger.info('Batch compressed. max_batch_size=%s, batch_size=%s, compressed_batch_size=%s',
-                    self.max_batch_size, batch.get_batch_size(), len(compressed_data))
+                    batch.get_batch_size(), len(compressed_data))
         self._send_batch(compressed_data)
