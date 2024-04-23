@@ -32,6 +32,6 @@ def forward_logs(event, _):
     parser = ParserFactory.get_parser(log_type, input_file)
     logger.info('Parser selected. parser=%s', type(parser).__name__)
     bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, log_name, log_set,
-                                 config.max_batch_size)
+                                 dest_config.max_batch_size)
     for line in parser.get_parsed_lines():
         bronto_client.send_data(line)

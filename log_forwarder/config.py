@@ -20,7 +20,7 @@ class DestinationConfig:
         self.destination_config = json.loads(base64.b64decode(b64_destination_config))
         self.bronto_api_key = os.environ.get('bronto_api_key')
         self.bronto_endpoint = os.environ.get('bronto_endpoint')
-        self.max_batch_size = int(os.environ.get('max_batch_size'), DestinationConfig.ONE_MB)
+        self.max_batch_size = int(os.environ.get('max_batch_size', DestinationConfig.ONE_MB))
 
     def _get_attribute_value(self, key, attribute_name):
         return self.destination_config[key][attribute_name]
