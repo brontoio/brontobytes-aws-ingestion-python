@@ -186,49 +186,49 @@ CLOUDTRAIL_LOG_SAMPLE = '''{"Records": [{
 
 
 def test_alb_access_log_parser():
-    parser = ParserFactory.get_parser('alb_access_log')
+    parser = ParserFactory.get_parser('alb_access_log', None)
     parsed = parser.parse(ALB_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['useragent'] == 'curl/7.46.0'
 
 
 def test_nlb_access_log_parser():
-    parser = ParserFactory.get_parser('nlb_access_log')
+    parser = ParserFactory.get_parser('nlb_access_log', None)
     parsed = parser.parse(NLB_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['chosen_cert_arn'] == 'arn:aws:acm:us-east-2:671290407336:certificate/2a108f19-aded-46b0-8493-c63eb1ef4a99'
 
 
 def test_clb_access_log_parser():
-    parser = ParserFactory.get_parser('clb_access_log')
+    parser = ParserFactory.get_parser('clb_access_log', None)
     parsed = parser.parse(CLB_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['ssl_protocol'] == 'TLSv1.2'
 
 
 def test_cf_standard_access_log_parser():
-    parser = ParserFactory.get_parser('cf_standard_access_log')
+    parser = ParserFactory.get_parser('cf_standard_access_log', None)
     parsed = parser.parse(CF_STANDARD_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['sc_content_type'] == 'text/html'
 
 
 def test_cf_realtime_access_log_parser():
-    parser = ParserFactory.get_parser('cf_realtime_access_log')
+    parser = ParserFactory.get_parser('cf_realtime_access_log', None)
     parsed = parser.parse(CF_REALTIME_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['sc-content-type'] == 'image/jpeg'
 
 
 def test_s3_access_log_parser():
-    parser = ParserFactory.get_parser('s3_access_log')
+    parser = ParserFactory.get_parser('s3_access_log', None)
     parsed = parser.parse(S3_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['UserAgent'] == 'S3Console/0.4'
 
 
 def test_cloudtrail_log_parser():
-    parser = ParserFactory.get_parser('cloudtrail_log')
+    parser = ParserFactory.get_parser('cloudtrail_log', None)
     parsed = parser.parse(CLOUDTRAIL_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['Records'][0]['eventName'] == 'StartInstances'
