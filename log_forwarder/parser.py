@@ -23,15 +23,6 @@ class Parser:
             return json.dumps(parsed.groupdict())
         return line
 
-    def parse_file(self):
-        parse_filepath = os.path.join(os.path.dirname(self.input_file.get_filepath()), "parsed_" +
-                                      os.path.basename(self.input_file.get_filepath())) + ".gz"
-        with gzip.open(parse_filepath, 'wt') as f:
-            for line in self.input_file.get_lines():
-                parsed = self.parse(line) + "\n"
-                f.write(parsed)
-        return parse_filepath
-
     def get_parsed_lines(self):
         for line in self.input_file.get_lines():
             yield self.parse(line)
@@ -94,6 +85,24 @@ class DefaultParser(Parser):
         return line
 
 
+class CloudTrailParser(Parser):
+
+    def __init__(self, input_file):
+        super().__init__(None, input_file)
+
+    def parse(self, line: str):
+        return line
+
+    def get_parsed_lines(self):
+        for line in self.input_file.get_lines():
+            data = json.loads(line)
+            if 'Records' in data:
+                for record in data['Records']:
+                    yield json.dumps(record)
+            else:
+                yield line
+
+
 class ParserFactory:
 
     @staticmethod
@@ -111,7 +120,7 @@ class ParserFactory:
         if log_type == 'cf_standard_access_log':
             return CloudFrontStandardAccessLogParser(input_file)
         if log_type == 'cloudtrail_log':
-            return DefaultParser(input_file)
+            return CloudTrailParser(input_file)
         if log_type == 'cloudwatch_log':
             return DefaultParser(input_file)
         return DefaultParser(input_file)

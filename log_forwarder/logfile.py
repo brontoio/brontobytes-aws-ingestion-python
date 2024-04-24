@@ -50,10 +50,8 @@ class LogFileFactory:
 
     @staticmethod
     def get_log_file(log_type, filepath):
-        if log_type == 's3_access_log':
+        if log_type in ['s3_access_log', 'cloudwatch_log']:
             return PlaintextFile(filepath)
-        if log_type == 'alb_access_log':
+        if log_type in ['alb_access_log', 'cloudtrail_log']:
             return GZipFile(filepath)
-        if log_type == 'cloudwatch_log':
-            return PlaintextFile(filepath)
         return GZipFile(filepath)

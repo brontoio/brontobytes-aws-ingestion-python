@@ -41,6 +41,12 @@ class LBAccessLogsRetriever(S3DataRetriever):
         return self.src_key.split('/')[-1].split('.')[1]
 
 
+class CloudtrailLogsRetriever(S3DataRetriever):
+
+    def get_data_id(self):
+        return 'cloudtrail'
+
+
 class CloudwatchDataRetriever(DataRetriever):
 
     def __init__(self, config: Config):
@@ -62,6 +68,8 @@ class DataRetrieverFactory:
 
     @staticmethod
     def get_data_retriever(event, config: Config):
+        if 'Records' in event and 'CloudTrail' in event['Records'][0]['s3']['object']['key']:
+            return CloudtrailLogsRetriever(config)
         if 'Records' in event and event['Records'][0]['s3']['object']['key'].split('/')[1] == 'AWSLogs':
             return LBAccessLogsRetriever(config)
         if 'Records' in event:
