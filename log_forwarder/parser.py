@@ -1,7 +1,5 @@
 import re
 import json
-import gzip
-import os
 
 # Regex used in this file mostly come from:
 # https://github.com/aws-samples/siem-on-amazon-opensearch-service/blob/v2.10.2/source/lambda/es_loader/aws.ini
@@ -16,12 +14,13 @@ class Parser:
         self.input_file = input_file
 
     def parse(self, line: str):
+        stripped_line = line.strip()
         if self.regex is None:
-            return line
-        parsed = re.match(self.pattern, line)
+            return stripped_line
+        parsed = re.match(self.pattern, stripped_line)
         if parsed is not None:
-            return json.dumps(parsed.groupdict())
-        return line
+            return json.dumps({k: v for k, v in parsed.groupdict().items() if v is not None})
+        return stripped_line
 
     def get_parsed_lines(self):
         for line in self.input_file.get_lines():
@@ -76,6 +75,14 @@ class CloudFrontStandardAccessLogParser(Parser):
         super().__init__(CloudFrontStandardAccessLogParser.REGEX, input_file)
 
 
+class VPCFlowLogParser(Parser):
+
+    REGEX = r'(?P<version>[^ ]+) (?P<account_id>[^ ]+) (?P<interface_id>[^ ]+) (?P<srcaddr>[^ ]+) (?P<dstaddr>[^ ]+) (?P<srcport>[^ ]+) (?P<dstport>[^ ]+) (?P<protocol>[^ ]+) (?P<packets>[^ ]+) (?P<bytes>[^ ]+) (?P<start>[^ ]+) (?P<end>[^ ]+) (?P<action>[^ ]+) (?P<log_status>[^ ]+)( (?P<vpc_id>[^ ]+) (?P<subnet_id>[^ ]+) (?P<instance_id>[^ ]+) (?P<tcp_flags>[^ ]+) (?P<type>[^ ]+) (?P<pkt_srcaddr>[^ ]+) (?P<pkt_dstaddr>[^ ]+) (?P<region>[^ ]+) (?P<az_id>[^ ]+) (?P<sublocation_type>[^ ]+) (?P<sublocation_id>[^ ]+) (?P<pkt_src_aws_service>[^ ]+) (?P<pkt_dst_aws_service>[^ ]+) (?P<flow_direction>[^ ]+) (?P<traffic_path>[^ ]+))?'
+
+    def __init__(self, input_file):
+        super().__init__(VPCFlowLogParser.REGEX, input_file)
+
+
 class DefaultParser(Parser):
 
     def __init__(self, input_file):
@@ -121,6 +128,8 @@ class ParserFactory:
             return CloudFrontStandardAccessLogParser(input_file)
         if log_type == 'cloudtrail_log':
             return CloudTrailParser(input_file)
+        if log_type == 'vpc_flow_log':
+            return VPCFlowLogParser(input_file)
         if log_type == 'cloudwatch_log':
             return DefaultParser(input_file)
         return DefaultParser(input_file)

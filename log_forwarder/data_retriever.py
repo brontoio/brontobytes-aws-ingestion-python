@@ -35,6 +35,12 @@ class S3AccessLogsRetriever(S3DataRetriever):
         return self.src_key.split('/')[1]
 
 
+class VPCFlowLogsRetriever(S3DataRetriever):
+
+    def get_data_id(self):
+        return 'vpc_flow_log'
+
+
 class LBAccessLogsRetriever(S3DataRetriever):
 
     def get_data_id(self):
@@ -72,6 +78,8 @@ class DataRetrieverFactory:
             return CloudtrailLogsRetriever(config)
         if 'Records' in event and event['Records'][0]['s3']['object']['key'].split('/')[1] == 'AWSLogs':
             return LBAccessLogsRetriever(config)
+        if 'Records' in event and 'vpcflowlogs' in event['Records'][0]['s3']['object']['key']:
+            return VPCFlowLogsRetriever(config)
         if 'Records' in event:
             return S3AccessLogsRetriever(config)
         if 'awslogs' in event:
