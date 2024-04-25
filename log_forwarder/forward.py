@@ -15,9 +15,10 @@ def forward_logs(event, _):
     config = Config(event)
 
     data_retriever = DataRetrieverFactory.get_data_retriever(event, config)
+    if data_retriever is None:
+        logger.info('Unknown data type from event. Aborting. event=%s', event)
+        return
     logger.info('Data retriever selected. data_retriever=%s', type(data_retriever).__name__)
-    data_retriever.get_data()
-
     data_id = data_retriever.get_data_id()
     logger.info('Data ID retrieved. data_id=%s', data_id)
 
@@ -26,7 +27,11 @@ def forward_logs(event, _):
     log_type = dest_config.get_log_type(data_id)
     logger.info('Destination information retrieved. log_name=%s, log_set=%s, log_type=%s', log_name, log_set,
                 log_type)
+    if log_type is None:
+        logger.info('Log type could not be retrieved. Aborting. event=%s', event)
+        return
 
+    data_retriever.get_data()
     input_file = LogFileFactory.get_log_file(log_type, config.filepath)
     logger.info('Input file type detected. input_file=%s', type(input_file).__name__)
     parser = ParserFactory.get_parser(log_type, input_file)

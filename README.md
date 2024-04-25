@@ -40,3 +40,14 @@ load balancers names for load balancers access logs and log group names for clou
 - For Cloudwatch logs, the keys in the destination configuration map are matched against a log group name.
 - For logs delivered to AWS S3, the keys in the destination configuration map are matched against the AWS 
 resource name (e.g. S3 bucket or load balancer names on which access logs is enabled).
+
+### Supported Log Type
+
+This function can parse keys and values of the following log types:
+- S3 access logs
+- Cloudtrail
+- ALB
+- NLB
+- Classic LB
+- VPC Flow Log (version 2 to 5)
+- CloudFront Standard anmd Realtime access logs
