@@ -19,6 +19,9 @@ def forward_logs(event, _):
         logger.info('Unknown data type from event. Aborting. event=%s', event)
         return
     logger.info('Data retriever selected. data_retriever=%s', type(data_retriever).__name__)
+    # We need to retrieve the data in order to be able to determine data_id, log_name, etc in the case of
+    # CloudWatch logs
+    data_retriever.get_data()
     data_id = data_retriever.get_data_id()
     logger.info('Data ID retrieved. data_id=%s', data_id)
 
@@ -31,7 +34,6 @@ def forward_logs(event, _):
         logger.info('Log type could not be retrieved. Aborting. event=%s', event)
         return
 
-    data_retriever.get_data()
     input_file = LogFileFactory.get_log_file(log_type, config.filepath)
     logger.info('Input file type detected. input_file=%s', type(input_file).__name__)
     parser = ParserFactory.get_parser(log_type, input_file)

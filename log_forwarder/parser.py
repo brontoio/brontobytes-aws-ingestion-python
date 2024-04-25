@@ -14,12 +14,13 @@ class Parser:
         self.input_file = input_file
 
     def parse(self, line: str):
+        stripped_line = line.strip()
         if self.regex is None:
-            return line
-        parsed = re.match(self.pattern, line)
+            return stripped_line
+        parsed = re.match(self.pattern, stripped_line)
         if parsed is not None:
-            return json.dumps(parsed.groupdict())
-        return line
+            return json.dumps({k: v for k, v in parsed.groupdict().items() if v is not None})
+        return stripped_line
 
     def get_parsed_lines(self):
         for line in self.input_file.get_lines():
