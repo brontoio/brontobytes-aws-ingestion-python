@@ -44,10 +44,11 @@ resource name (e.g. S3 bucket or load balancer names on which access logs is ena
 ### Supported Log Type
 
 This function can parse keys and values of the following log types:
-- S3 access logs
+- S3 access logs (the lambda function must be deployed in the same account and region as the bucket whose access 
+logs are being forwarded)
 - Cloudtrail
 - ALB
 - NLB
 - Classic LB
 - VPC Flow Log (version 2 to 5)
-- CloudFront Standard anmd Realtime access logs
+- CloudFront Standard and Realtime access logs

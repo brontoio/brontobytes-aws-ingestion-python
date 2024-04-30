@@ -1,6 +1,7 @@
 import gzip
 import json
 import base64
+from typing import Union
 
 from config import Config
 from clients import S3Client
@@ -17,9 +18,9 @@ class DataRetriever:
 
 class S3DataRetriever(DataRetriever):
 
-    def __init__(self, config: Config):
-        self.src_bucket_name = config.event['Records'][0]['s3']['bucket']['name']
-        self.src_key = config.event['Records'][0]['s3']['object']['key']
+    def __init__(self, config: Config, index: int):
+        self.src_bucket_name = config.event['Records'][index]['s3']['bucket']['name']
+        self.src_key = config.event['Records'][index]['s3']['object']['key']
         self.s3_client = S3Client(config.filepath)
 
     def get_data(self):
@@ -44,7 +45,7 @@ class VPCFlowLogsRetriever(S3DataRetriever):
 class LBAccessLogsRetriever(S3DataRetriever):
 
     def get_data_id(self):
-        return self.src_key.split('/')[-1].split('.')[1]
+        return self.src_key.split('/')[-1].split('.')[1].split('_')[0]
 
 
 class CloudtrailLogsRetriever(S3DataRetriever):
@@ -63,8 +64,9 @@ class CloudwatchDataRetriever(DataRetriever):
         data = json.loads(gzip.decompress(base64.b64decode(self.config.event['awslogs']['data'])).decode())
         self.log_group_name = data['logGroup']
         with open(self.config.filepath, 'wb') as f:
-            for line in data['logEvents']:
-                f.write((line['message']).encode())
+            for i in range(0, len(data['logEvents'])):
+                line = data['logEvents'][i]['message'] + ('\n' if i < len(data['logEvents']) - 1 else '')
+                f.write(line.encode())
 
     def get_data_id(self):
         return self.log_group_name
@@ -73,16 +75,21 @@ class CloudwatchDataRetriever(DataRetriever):
 class DataRetrieverFactory:
 
     @staticmethod
-    def get_data_retriever(event, config: Config):
-        if 'Records' in event and 'CloudTrail' in event['Records'][0]['s3']['object']['key']:
-            return CloudtrailLogsRetriever(config)
-        if 'Records' in event and event['Records'][0]['s3']['object']['key'].split('/')[1] == 'AWSLogs':
-            return LBAccessLogsRetriever(config)
-        if 'Records' in event and 'vpcflowlogs' in event['Records'][0]['s3']['object']['key']:
-            return VPCFlowLogsRetriever(config)
-        if 'Records' in event:
-            return S3AccessLogsRetriever(config)
-        if 'awslogs' in event:
-            return CloudwatchDataRetriever(config)
+    def get_data_retrievers(config: Config) -> list[Union[DataRetriever, None]]:
+        if 'Records' in config.event:
+            if 'CloudTrail' in config.event['Records'][0]['s3']['object']['key']:
+                for i in range(0, len(config.event['Records'])):
+                    yield CloudtrailLogsRetriever(config, i)
+            if 'elasticloadbalancing' in config.event['Records'][0]['s3']['object']['key']:
+                for i in range(0, len(config.event['Records'])):
+                    yield LBAccessLogsRetriever(config, i)
+            if 'vpcflowlogs' in config.event['Records'][0]['s3']['object']['key']:
+                for i in range(0, len(config.event['Records'])):
+                    yield VPCFlowLogsRetriever(config, i)
+            else:
+                for i in range(0, len(config.event['Records'])):
+                    yield S3AccessLogsRetriever(config, i)
+        if 'awslogs' in config.event:
+            yield CloudwatchDataRetriever(config)
         else:
-            return None
+            yield None
