@@ -28,7 +28,7 @@ class GZipFile(LogFile):
     def get_lines(self):
         with self.file as f:
             for line in f.readlines():
-                yield line.decode()
+                yield line.decode().strip()
 
 
 class PlaintextFile(LogFile):
@@ -43,7 +43,7 @@ class PlaintextFile(LogFile):
     def get_lines(self):
         with self.file as f:
             for line in f.readlines():
-                yield line
+                yield line.strip()
 
 
 class LogFileFactory:
