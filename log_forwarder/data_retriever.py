@@ -1,9 +1,10 @@
 import gzip
 import json
+import os
 import base64
 from typing import Union
 
-from config import Config
+from config import Config, DestinationConfig
 from clients import S3Client
 
 
@@ -54,6 +55,12 @@ class CloudtrailLogsRetriever(S3DataRetriever):
         return 'cloudtrail'
 
 
+class CloudfrontLogsRetriever(S3DataRetriever):
+
+    def get_data_id(self):
+        return os.path.basename(self.src_key).split('.')[0]
+
+
 class CloudwatchDataRetriever(DataRetriever):
 
     def __init__(self, config: Config):
@@ -75,8 +82,9 @@ class CloudwatchDataRetriever(DataRetriever):
 class DataRetrieverFactory:
 
     @staticmethod
-    def get_data_retrievers(config: Config) -> list[Union[DataRetriever, None]]:
+    def get_data_retrievers(config: Config, dest_config: DestinationConfig) -> list[Union[DataRetriever, None]]:
         if 'Records' in config.event:
+            filename = os.path.basename(config.event['Records'][0]['s3']['object']['key'])
             if 'CloudTrail' in config.event['Records'][0]['s3']['object']['key']:
                 for i in range(0, len(config.event['Records'])):
                     yield CloudtrailLogsRetriever(config, i)
@@ -86,6 +94,10 @@ class DataRetrieverFactory:
             if 'vpcflowlogs' in config.event['Records'][0]['s3']['object']['key']:
                 for i in range(0, len(config.event['Records'])):
                     yield VPCFlowLogsRetriever(config, i)
+            if (filename.split('.')[0] in dest_config.get_keys() and
+                    dest_config.get_log_type(filename.split('.')[0]) == 'cf_standard_access_log'):
+                for i in range(0, len(config.event['Records'])):
+                    yield CloudfrontLogsRetriever(config, i)
             else:
                 for i in range(0, len(config.event['Records'])):
                     yield S3AccessLogsRetriever(config, i)

@@ -14,7 +14,7 @@ def forward_logs(event, _):
     dest_config = DestinationConfig()
     config = Config(event)
 
-    for data_retriever in DataRetrieverFactory.get_data_retrievers(config):
+    for data_retriever in DataRetrieverFactory.get_data_retrievers(config, dest_config):
         if data_retriever is None:
             logger.info('Unknown data type from event. Aborting. event=%s', event)
             return

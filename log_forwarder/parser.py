@@ -69,10 +69,18 @@ class CloudFrontRealtimeAccessLogParser(Parser):
 
 class CloudFrontStandardAccessLogParser(Parser):
 
-    REGEX = r'(?P<date_time>[0-9-:\t]+)\t(?P<x_edge_location>[0-9A-Z-]+)\t(?P<sc_bytes>[0-9]+)\t(?P<c_ip>[0-9a-f.:]+)\t(?P<cs_method>[A-Z]+)\t(?P<cs_host>[0-9A-Za-z.]+)\t(?P<cs_uri_stem>[^\t]+)\t(?P<sc_status>[0-9-]+)\t(?P<cs_referer>[^\t]+)\t(?P<cs_user_agent>[^\t]+)\t(?P<cs_uri_query>[^\t]+)\t(?P<cs_cookie>[^\t]+)\t(?P<x_edge_result_type>[^\t]+)\t(?P<x_edge_request_id>[^\t]+)\t(?P<x_host_header>[^\t]+)\t(?P<cs_protocol>[^\t]+)\t(?P<cs_bytes>[^\t]+)\t(?P<time_taken>[^\t]+)\t(?P<x_forwarded_for>[^\t]+)\t(?P<ssl_protocol>[^\t]+)\t(?P<ssl_cipher>[^\t]+)\t(?P<x_edge_response_result_type>[^\t]+)\t(?P<cs_protocol_version>[^\t]+)\t(?P<fle_status>[^\t]+)\t(?P<fle_encrypted_fields>[^\t]+)(\t(?P<c_port>[^\t]+)\t(?P<time_to_first_byte>[^\t]+)\t(?P<x_edge_detailed_result_type>[^\t]+)\t(?P<sc_content_type>[^\t]+)\t(?P<sc_content_len>[^\t]+)\t(?P<sc_range_start>[^\t]+)\t(?P<sc_range_end>[^\t]+))?'
+    REGEX = r'(?P<date>[0-9-]+)\t(?P<time>[0-9:]+)\t(?P<x_edge_location>[0-9A-Z-]+)\t(?P<sc_bytes>[0-9]+)\t(?P<c_ip>[0-9a-f.:]+)\t(?P<cs_method>[A-Z]+)\t(?P<cs_host>[0-9A-Za-z.]+)\t(?P<cs_uri_stem>[^\t]+)\t(?P<sc_status>[0-9-]+)\t(?P<cs_referer>[^\t]+)\t(?P<cs_user_agent>[^\t]+)\t(?P<cs_uri_query>[^\t]+)\t(?P<cs_cookie>[^\t]+)\t(?P<x_edge_result_type>[^\t]+)\t(?P<x_edge_request_id>[^\t]+)\t(?P<x_host_header>[^\t]+)\t(?P<cs_protocol>[^\t]+)\t(?P<cs_bytes>[^\t]+)\t(?P<time_taken>[^\t]+)\t(?P<x_forwarded_for>[^\t]+)\t(?P<ssl_protocol>[^\t]+)\t(?P<ssl_cipher>[^\t]+)\t(?P<x_edge_response_result_type>[^\t]+)\t(?P<cs_protocol_version>[^\t]+)\t(?P<fle_status>[^\t]+)\t(?P<fle_encrypted_fields>[^\t]+)(\t(?P<c_port>[^\t]+)\t(?P<time_to_first_byte>[^\t]+)\t(?P<x_edge_detailed_result_type>[^\t]+)\t(?P<sc_content_type>[^\t]+)\t(?P<sc_content_len>[^\t]+)\t(?P<sc_range_start>[^\t]+)\t(?P<sc_range_end>[^\t]+))?'
 
     def __init__(self, input_file):
         super().__init__(CloudFrontStandardAccessLogParser.REGEX, input_file)
+
+    # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#BasicDistributionFileFormat
+    def get_parsed_lines(self):
+        for line in self.input_file.get_lines():
+            # Cloudfront Standard log files contain headers starting with '#'. This also skips empty lines,
+            # should there be any.
+            if len(line) > 0 and line[0] != '#':
+                yield self.parse(line)
 
 
 class VPCFlowLogParser(Parser):
