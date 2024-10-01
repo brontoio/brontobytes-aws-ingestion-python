@@ -39,7 +39,7 @@ The key of the maps are S3 bucket names for S3 access logs,
 load balancers names for load balancers access logs and log group names for cloudwatch logs. In general, 
 - For Cloudwatch logs, the keys in the destination configuration map are matched against a log group name.
 - For logs delivered to AWS S3, the keys in the destination configuration map are matched against the AWS 
-resource name (e.g. S3 bucket or load balancer names on which access logs is enabled).
+resource name (e.g. S3 bucket name, load balancer name, or Cloudfront distribution ID on which access logs are enabled).
 
 ### Supported Log Type
 
@@ -48,7 +48,5 @@ This function can parse keys and values of the following log types:
 logs are being forwarded)
 - Cloudtrail
 - ALB
-- NLB
-- Classic LB
 - VPC Flow Log (version 2 to 5)
-- CloudFront Standard and Realtime access logs
+- CloudFront Standard access logs

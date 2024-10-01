@@ -35,3 +35,6 @@ class DestinationConfig:
 
     def get_log_type(self, key):
         return self._get_attribute_value(key, 'log_type')
+
+    def get_keys(self):
+        return self.destination_config.keys()
