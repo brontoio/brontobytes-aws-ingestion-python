@@ -1,4 +1,5 @@
 import logging
+import json
 
 from config import Config, DestinationConfig
 from data_retriever import DataRetrieverFactory
@@ -10,7 +11,8 @@ logger = logging.getLogger()
 logger.setLevel("INFO")
 
 
-def forward_logs(event, _):
+def process(event):
+    logger.info('Processing event. event=%s', event)
     dest_config = DestinationConfig()
     config = Config(event)
 
@@ -47,3 +49,16 @@ def forward_logs(event, _):
                 batch = Batch()
         if batch.get_batch_size() > 0:
             bronto_client.send_data(batch)
+
+
+def forward_logs(_event, _):
+    logger.info('event=%s', _event)
+    source = _event.get('source')
+    _event_details = _event.get('detail')
+    # event coming from S3 via EventBridge
+    if source is not None and source == 'aws.s3' and _event_details is not None:
+        event = {'Records': [{'s3': _event_details}]}
+        process(event)
+        return
+    # event coming from Cloudwatch or S3 notification
+    process(_event)
