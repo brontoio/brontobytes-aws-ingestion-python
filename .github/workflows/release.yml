@@ -16,7 +16,7 @@ jobs:
       deployments: write
 
     env:
-      VERSION: "0.0.${{ github.run_number }}-${{ github.run_attempt }}"
+      VERSION: "1.0.${{ github.run_number }}-${{ github.run_attempt }}"
 
     steps:
       - name: Checkout

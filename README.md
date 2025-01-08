@@ -3,7 +3,7 @@
 This component is designed to run as an AWS lambda function.
 
 It consumes messages about AWS S3 objects containing log data, retrieves these objects and send their content to 
-`brontobytes.io`.
+`bronto.io`.
 
 ### Configuration
 
@@ -19,27 +19,40 @@ A sample configuration is:
 ```json
 {
     "my-s3-bucket-name": {
-      "logname": "my-bucket-access-logs",
-      "logset": "s3AccessLogs",
+      "dataset": "my-bucket-access-logs",
+      "collection": "s3AccessLogs",
       "log_type": "s3_access_log"
     },
     "my-load-balancer-name": {
-      "logname": "my-load-balancer-access-logs",
-      "logset": "lbAccessLogs",
+      "dataset": "my-load-balancer-access-logs",
+      "collection": "lbAccessLogs",
       "log_type": "alb_access_log"
     },
     "my-lambda-function-log-group-name": {
-      "logname": "log-group-logs",
-      "logset": "lambdaLogs",
+      "dataset": "log-group-logs",
+      "collection": "lambdaLogs",
       "log_type": "cloudwatch_log"
     }
   }
 ```
 The key of the maps are S3 bucket names for S3 access logs, 
 load balancers names for load balancers access logs and log group names for cloudwatch logs. In general, 
-- For Cloudwatch logs, the keys in the destination configuration map are matched against a log group name.
-- For logs delivered to AWS S3, the keys in the destination configuration map are matched against the AWS 
-resource name (e.g. S3 bucket name, load balancer name, or Cloudfront distribution ID on which access logs are enabled).
+- For Cloudwatch logs, the keys in the destination configuration map are matched against log group names.
+- For logs delivered to AWS S3, the keys in the destination configuration map are matched against AWS 
+resource names (e.g. S3 bucket name, load balancer name, or Cloudfront distribution ID on which access logs are enabled).
+
+Notes:
+
+- For logs delivered to AWS S3, only data matching an entry in the configuration is forwarded.
+- For logs delivered to AWS S3, `log_type` is a mandatory field. `dataset` and `collection` are optional. Data will be 
+forwarded to default Collection and Dataset if `dataset` and `collection` are not set.
+- For Cloudwatch logs, entries in the configuration map are optional. If not set, the bronto destination 
+(i.e. `dataset` and `collection`) is so that:  
+  - the collection is defined with the `cloudwatch_default_collection` environment variable or the default Bronto 
+  collection if not set.
+  - the dataset is the Cloudwatch log group name (e.g. `/aws/lambda/<lambda_function_name>`).
+- Legacy attributes `logname` and `logset` are being deprecated in favour of `dataset` and `collection`. However, they
+are still accepted in configuration maps for now.
 
 ### Supported Log Type
 

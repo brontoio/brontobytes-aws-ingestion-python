@@ -1,0 +1,2 @@
+class LogTypeMissingException(Exception):
+    pass
