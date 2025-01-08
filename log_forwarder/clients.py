@@ -4,6 +4,8 @@ import boto3
 import urllib.request
 import gzip
 import logging
+from typing import Dict
+import json
 
 logger = logging.getLogger()
 
@@ -35,21 +37,31 @@ class Batch:
     def get_data(self) -> list[str]:
         return self.batch
 
+    def get_formatted_data(self, attributes: Dict[str, str]):
+        log_messages = [{'log': line} for line in self.batch]
+        for log_message in log_messages:
+            log_message.update(attributes)
+        return '\n'.join([json.dumps(log_message) for log_message in log_messages])
+
 
 class BrontoClient:
 
-    def __init__(self, api_key, ingestion_endpoint, log_name, log_set):
+    def __init__(self, api_key, ingestion_endpoint, dataset, collection):
         self.api_key = api_key
-        self.log_name = log_name
-        self.log_set = log_set
+        self.dataset = dataset
+        self.collection = collection
         self.ingestion_endpoint = ingestion_endpoint
         self.headers = {
             'Content-Encoding': 'gzip',
-            'Content-Type': 'text/plain',
-            'x-bronto-api-key': self.api_key,
-            'x-bronto-log-name': self.log_name,
-            'x-bronto-logset': self.log_set
+            'Content-Type': 'application/json',
+            'User-Agent': 'bronto-aws-integration',
+            'x-bronto-api-key': self.api_key
         }
+        if self.dataset is not None:
+            self.headers.update({'x-bronto-service-name': self.dataset})
+        if self.collection is not None:
+            self.headers.update({'x-bronto-service-namespace': self.collection})
+
 
     def _send_batch(self, compressed_batch):
         request = urllib.request.Request(self.ingestion_endpoint, data=compressed_batch, headers=self.headers)
@@ -63,9 +75,15 @@ class BrontoClient:
                                attempt, max_attempts, resp.status, resp.reason)
                 time.sleep(delay_sec)
                 self._send_batch(compressed_batch)
+            elif resp.status == 200:
+                logger.info('data sent successfully. collection=%s, dataset=%s', self.collection,
+                            self.dataset)
+            else:
+                logger.error('max attempts reached. attempt=%s, max_attempts=%s', attempt, max_attempts)
+                raise Exception('BrontoClientMaxAttemptReached')
 
-    def send_data(self, batch):
-        data = '\n'.join(batch.get_data())
+    def send_data(self, batch, attributes=None):
+        data = batch.get_formatted_data({} if attributes is None else attributes)
         compressed_data = gzip.compress(data.encode())
         logger.info('Batch compressed. batch_size=%s, compressed_batch_size=%s',batch.get_batch_size(),
                     len(compressed_data))

@@ -1,6 +1,10 @@
 import json
 from parser import ParserFactory
 
+from config import (CLOUDFRONT_REALTIME_ACCESS_LOG_TYPE, ALB_ACCESS_LOG_TYPE, NLB_ACCESS_LOG_TYPE,
+                    CLOUDFRONT_STANDARD_ACCESS_LOG_TYPE, CLASSIC_LB_ACCESS_LOG_TYPE, CLOUDTRAIL_LOG_TYPE,
+                    S3_ACCESS_LOG_TYPE)
+
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-log-entry-examples
 ALB_ACCESS_LOG_SAMPLE = 'https 2018-07-02T22:23:00.186641Z app/my-loadbalancer/50dc6c495c0c9188 192.168.131.39:2817 10.0.0.1:80 0.086 0.048 0.037 200 200 0 57 "GET https://www.example.com:443/ HTTP/1.1" "curl/7.46.0" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 "Root=1-58337281-1d84f3d73c47ec4e58577259" "www.example.com" "arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012" 1 2018-07-02T22:22:48.364000Z "authenticate,forward" "-" "-" "10.0.0.1:80" "200" "-" "-"'
 
@@ -186,49 +190,49 @@ CLOUDTRAIL_LOG_SAMPLE = '''{"Records": [{
 
 
 def test_alb_access_log_parser():
-    parser = ParserFactory.get_parser('alb_access_log', None)
+    parser = ParserFactory.get_parser(ALB_ACCESS_LOG_TYPE, None)
     parsed = parser.parse(ALB_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['useragent'] == 'curl/7.46.0'
 
 
 def test_nlb_access_log_parser():
-    parser = ParserFactory.get_parser('nlb_access_log', None)
+    parser = ParserFactory.get_parser(NLB_ACCESS_LOG_TYPE, None)
     parsed = parser.parse(NLB_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['chosen_cert_arn'] == 'arn:aws:acm:us-east-2:671290407336:certificate/2a108f19-aded-46b0-8493-c63eb1ef4a99'
 
 
 def test_clb_access_log_parser():
-    parser = ParserFactory.get_parser('clb_access_log', None)
+    parser = ParserFactory.get_parser(CLASSIC_LB_ACCESS_LOG_TYPE, None)
     parsed = parser.parse(CLB_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['ssl_protocol'] == 'TLSv1.2'
 
 
 def test_cf_standard_access_log_parser():
-    parser = ParserFactory.get_parser('cf_standard_access_log', None)
+    parser = ParserFactory.get_parser(CLOUDFRONT_STANDARD_ACCESS_LOG_TYPE, None)
     parsed = parser.parse(CF_STANDARD_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['sc_content_type'] == 'text/html'
 
 
 def test_cf_realtime_access_log_parser():
-    parser = ParserFactory.get_parser('cf_realtime_access_log', None)
+    parser = ParserFactory.get_parser(CLOUDFRONT_REALTIME_ACCESS_LOG_TYPE, None)
     parsed = parser.parse(CF_REALTIME_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['sc-content-type'] == 'image/jpeg'
 
 
 def test_s3_access_log_parser():
-    parser = ParserFactory.get_parser('s3_access_log', None)
+    parser = ParserFactory.get_parser(S3_ACCESS_LOG_TYPE, None)
     parsed = parser.parse(S3_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['UserAgent'] == 'S3Console/0.4'
 
 
 def test_cloudtrail_log_parser():
-    parser = ParserFactory.get_parser('cloudtrail_log', None)
+    parser = ParserFactory.get_parser(CLOUDTRAIL_LOG_TYPE, None)
     parsed = parser.parse(CLOUDTRAIL_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['Records'][0]['eventName'] == 'StartInstances'
