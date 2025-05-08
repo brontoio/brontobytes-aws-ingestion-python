@@ -63,7 +63,7 @@ class DestinationConfig:
                     raise Exception('Config S3 URI is malformed. Bucket name or path missing. s3_uri=%s',
                                     self.config_s3_uri)
                 bucket_name = bucket_name_and_path[0]
-                s3_key = ','.join(bucket_name_and_path[1:])
+                s3_key = '/'.join(bucket_name_and_path[1:])
                 self.s3_client = boto3.client('s3')
                 try:
                     response = self.s3_client.get_object(
@@ -72,7 +72,8 @@ class DestinationConfig:
                     )
                     self.destination_config = json.loads(response['Body'].read())
                 except Exception as e:
-                    logger.error('Cannot get destination config from S3. exception', e)
+                    logger.error('Cannot get destination config from S3. bucket_name=%s, s3_key=%s',
+                                 bucket_name, s3_key)
                     raise e
 
     def _get_attribute_value(self, key, attribute_name):

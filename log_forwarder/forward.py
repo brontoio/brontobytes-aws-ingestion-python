@@ -16,7 +16,11 @@ def process(event):
     dest_config: DestinationConfig = DestinationConfig()
     config: Config = Config(event)
 
-    for data_retriever in DataRetrieverFactory.get_data_retrievers(config, dest_config):
+    retrievers = DataRetrieverFactory.get_data_retrievers(config, dest_config)
+    if len(retrievers) == 0:
+        logger.warning('Event does not map to any retriever.')
+
+    for data_retriever in retrievers:
         if data_retriever is None:
             logger.info('Unknown data type from event. Skipping.')
             continue
