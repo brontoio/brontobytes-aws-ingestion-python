@@ -2,7 +2,7 @@ import re
 import json
 from config import (CLOUDFRONT_REALTIME_ACCESS_LOG_TYPE, ALB_ACCESS_LOG_TYPE, NLB_ACCESS_LOG_TYPE,
                     CLOUDFRONT_STANDARD_ACCESS_LOG_TYPE, CLASSIC_LB_ACCESS_LOG_TYPE, CLOUDTRAIL_LOG_TYPE,
-                    CLOUDWATCH_LOG_TYPE, VPC_FLOW_LOG_TYPE, S3_ACCESS_LOG_TYPE)
+                    CLOUDWATCH_LOG_TYPE, VPC_FLOW_LOG_TYPE, S3_ACCESS_LOG_TYPE, BEDROCK_S3_LOG_TYPE)
 # Regex used in this file mostly come from:
 # https://github.com/aws-samples/siem-on-amazon-opensearch-service/blob/v2.10.2/source/lambda/es_loader/aws.ini
 #
@@ -140,6 +140,8 @@ class ParserFactory:
             return CloudTrailParser(input_file)
         if log_type == VPC_FLOW_LOG_TYPE:
             return VPCFlowLogParser(input_file)
+        if log_type == BEDROCK_S3_LOG_TYPE:
+            return DefaultParser(input_file)
         if log_type == CLOUDWATCH_LOG_TYPE:
             return DefaultParser(input_file)
         return DefaultParser(input_file)

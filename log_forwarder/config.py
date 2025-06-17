@@ -16,6 +16,7 @@ CLOUDFRONT_REALTIME_ACCESS_LOG_TYPE = 'cf_realtime_access_log'
 CLOUDFRONT_STANDARD_ACCESS_LOG_TYPE = 'cf_standard_access_log'
 CLOUDTRAIL_LOG_TYPE = 'cloudtrail_log'
 VPC_FLOW_LOG_TYPE = 'vpc_flow_log'
+BEDROCK_S3_LOG_TYPE = 'bedrock_s3'
 CLOUDWATCH_LOG_TYPE = 'cloudwatch_log'
 
 
@@ -63,7 +64,8 @@ class DestinationConfig:
                     raise Exception('Config S3 URI is malformed. Bucket name or path missing. s3_uri=%s',
                                     self.config_s3_uri)
                 bucket_name = bucket_name_and_path[0]
-                s3_key = ','.join(bucket_name_and_path[1:])
+                s3_key = '/'.join(bucket_name_and_path[1:])
+                logger.info('Retrieving configuration from S3. config_s3_uri=%s, bucket_name=%s, s3_key=%s',self.config_s3_uri, bucket_name, s3_key)
                 self.s3_client = boto3.client('s3')
                 try:
                     response = self.s3_client.get_object(
@@ -72,7 +74,7 @@ class DestinationConfig:
                     )
                     self.destination_config = json.loads(response['Body'].read())
                 except Exception as e:
-                    logger.error('Cannot get destination config from S3. exception', e)
+                    logger.error('Cannot get destination config from S3. exception=%s', e)
                     raise e
 
     def _get_attribute_value(self, key, attribute_name):

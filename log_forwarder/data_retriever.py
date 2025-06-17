@@ -46,6 +46,15 @@ class S3DataRetriever(DataRetriever):
         raise NotImplementedError()
 
 
+class BedrockS3Retriever(S3DataRetriever):
+
+    def get_name(self):
+        return 'BedrockS3'
+
+    def get_data_id(self):
+        return 'bedrock_s3'
+
+
 class S3AccessLogsRetriever(S3DataRetriever):
 
     def get_name(self):
@@ -131,6 +140,8 @@ class DataRetrieverFactory:
                     data_retrievers.append(LBAccessLogsRetriever(config, bucket_name, s3_key))
                 elif 'vpcflowlogs' in config.event['Records'][0]['s3']['object']['key']:
                     data_retrievers.append(VPCFlowLogsRetriever(config, bucket_name, s3_key))
+                elif 'bedrock' in config.event['Records'][0]['s3']['object']['key']:
+                    data_retrievers.append(BedrockS3Retriever(config, bucket_name, s3_key))
                 elif (filename.split('.')[0] in dest_config.get_keys() and
                         dest_config.get_log_type(filename.split('.')[0]) == 'cf_standard_access_log'):
                     data_retrievers.append(CloudfrontLogsRetriever(config, bucket_name, s3_key))

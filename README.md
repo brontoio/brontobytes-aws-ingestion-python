@@ -44,8 +44,18 @@ resource names (e.g. S3 bucket name, load balancer name, or Cloudfront distribut
 Notes:
 
 - For logs delivered to AWS S3, only data matching an entry in the configuration is forwarded.
+- For logs delivered to Cloudwatch, `log_type` should be set to `cloudwatch_log`.
 - For logs delivered to AWS S3, `log_type` is a mandatory field. `dataset` and `collection` are optional. Data will be 
-forwarded to default Collection and Dataset if `dataset` and `collection` are not set.
+forwarded to default Collection and Dataset if `dataset` and `collection` are not set. The possible log_type values are:
+  - `bedrock_s3` for Bedrock logs delivered to S3. Note that some Bedrock model invocation logs may be delivered to Cloudwatch too.
+  - `vpc_flow_log`
+  - `cloudtrail`
+  - `s3_access_log`
+  - `alb_access_log`
+  - `nlb_access_log`
+  - `clb_access_log`
+  - `cf_realtime_access_log`
+  - `cf_standard_access_log`
 - For Cloudwatch logs, entries in the configuration map are optional. If not set, the bronto destination 
 (i.e. `dataset` and `collection`) is so that:  
   - the collection is defined with the `cloudwatch_default_collection` environment variable or the default Bronto 
