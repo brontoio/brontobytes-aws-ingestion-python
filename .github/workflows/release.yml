@@ -27,15 +27,6 @@ jobs:
         run: git tag ${{ env.VERSION }} && git push --tags
         shell: bash
 
-      - name: Create Release
-        if: success()
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: v${{ env.VERSION }}
-
       - name: Build Lambda Artefact
         run: cd log_forwarder && zip -r ../brontobytes-aws-ingestion-python *
         shell: bash
