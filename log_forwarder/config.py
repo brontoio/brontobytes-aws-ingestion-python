@@ -74,7 +74,8 @@ class DestinationConfig:
                     )
                     self.destination_config = json.loads(response['Body'].read())
                 except Exception as e:
-                    logger.error('Cannot get destination config from S3. exception=%s', e)
+                    logger.error('Cannot get destination config from S3. bucket_name=%s, s3_key=%s',
+                                 bucket_name, s3_key)
                     raise e
 
     def _get_attribute_value(self, key, attribute_name):
