@@ -1,7 +1,7 @@
 import gzip
 
 from config import (ALB_ACCESS_LOG_TYPE, CLOUDTRAIL_LOG_TYPE, CLOUDWATCH_LOG_TYPE, VPC_FLOW_LOG_TYPE,
-                    S3_ACCESS_LOG_TYPE)
+                    S3_ACCESS_LOG_TYPE, BEDROCK_S3_LOG_TYPE)
 
 
 class LogFile:
@@ -55,6 +55,6 @@ class LogFileFactory:
     def get_log_file(log_type, filepath):
         if log_type is None or log_type in [S3_ACCESS_LOG_TYPE, CLOUDWATCH_LOG_TYPE]:
             return PlaintextFile(filepath)
-        if log_type in [ALB_ACCESS_LOG_TYPE, CLOUDTRAIL_LOG_TYPE, VPC_FLOW_LOG_TYPE]:
+        if log_type in [ALB_ACCESS_LOG_TYPE, CLOUDTRAIL_LOG_TYPE, VPC_FLOW_LOG_TYPE, BEDROCK_S3_LOG_TYPE]:
             return GZipFile(filepath)
         return GZipFile(filepath)
