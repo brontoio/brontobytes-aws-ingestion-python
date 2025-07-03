@@ -45,6 +45,7 @@ def process(event):
         parser = ParserFactory.get_parser(log_type, input_file)
         logger.info('Parser selected. parser=%s', type(parser).__name__)
         attributes = config.get_resource_attributes()
+        attributes.update(data_retriever.get_log_attributes_from_payload())
         bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, dataset, collection)
         batch = Batch()
         for line in parser.get_parsed_lines():
