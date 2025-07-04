@@ -24,6 +24,9 @@ class DataRetriever:
     def get_data_id(self):
         raise NotImplementedError()
 
+    def get_log_attributes_from_payload(self):
+        return {}
+
 
 class S3DataRetriever(DataRetriever):
 
@@ -111,10 +114,12 @@ class CloudwatchDataRetriever(DataRetriever):
     def __init__(self, config: Config):
         self.config = config
         self.log_group_name = None
+        self.log_stream = None
 
     def get_data(self):
         data = json.loads(gzip.decompress(base64.b64decode(self.config.event['awslogs']['data'])).decode())
         self.log_group_name = data['logGroup']
+        self.log_stream = data['logStream']
         with open(self.config.filepath, 'wb') as f:
             for i in range(0, len(data['logEvents'])):
                 line = data['logEvents'][i]['message'] + ('\n' if i < len(data['logEvents']) - 1 else '')
@@ -122,6 +127,9 @@ class CloudwatchDataRetriever(DataRetriever):
 
     def get_data_id(self):
         return self.log_group_name
+
+    def get_log_attributes_from_payload(self):
+        return {'logGroup': self.log_group_name, 'logStream': self.log_stream}
 
 
 class DataRetrieverFactory:
