@@ -9,7 +9,8 @@ from data_retriever import CloudwatchDataRetriever, LBAccessLogsRetriever, S3Acc
 def test_cloudwatch():
     # from https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html#LambdaFunctionExample
     group_name = 'my_log_group'
-    entries = {'logGroup': group_name, 'logEvents': [{'message': 'entry1'}, {'message': 'entry2'}]}
+    log_stream = 'my_log_stream'
+    entries = {'logGroup': group_name, 'logStream': log_stream, 'logEvents': [{'message': 'entry1'}, {'message': 'entry2'}]}
     event = {'awslogs': {'data': base64.b64encode(gzip.compress(json.dumps(entries).encode())).decode()}}
     config = Config(event)
     retriever = CloudwatchDataRetriever(config)
@@ -17,6 +18,8 @@ def test_cloudwatch():
     assert (open(config.filepath, 'rb').read().decode().split('\n') ==
             [entry['message'] for entry in entries['logEvents']])
     assert retriever.get_data_id() == group_name
+    assert retriever.log_group_name == group_name
+    assert retriever.log_stream == log_stream
 
 
 def test_lb_access_logs_retriever():
