@@ -23,9 +23,10 @@ class S3Client:
 
 class Batch:
 
-    def __init__(self):
+    def __init__(self, no_formatting=False):
         self.batch = []
         self.size = 0
+        self.no_formatting = no_formatting
 
     def add(self, line):
         self.batch.append(line)
@@ -38,6 +39,8 @@ class Batch:
         return self.batch
 
     def get_formatted_data(self, attributes: Dict[str, str]):
+        if self.no_formatting:
+            return '\n'.join([line for line in self.batch])
         log_messages = [{'log': line} for line in self.batch]
         for log_message in log_messages:
             log_message.update(attributes)
@@ -46,10 +49,11 @@ class Batch:
 
 class BrontoClient:
 
-    def __init__(self, api_key, ingestion_endpoint, dataset, collection):
+    def __init__(self, api_key, ingestion_endpoint, dataset, collection, client_type):
         self.api_key = api_key
         self.dataset = dataset
         self.collection = collection
+        self.client_type = client_type
         self.ingestion_endpoint = ingestion_endpoint
         self.headers = {
             'Content-Encoding': 'gzip',
@@ -61,7 +65,8 @@ class BrontoClient:
             self.headers.update({'x-bronto-service-name': self.dataset})
         if self.collection is not None:
             self.headers.update({'x-bronto-service-namespace': self.collection})
-
+        if self.client_type is not None:
+            self.headers.update({'x-bronto-client': self.client_type})
 
     def _send_batch(self, compressed_batch):
         request = urllib.request.Request(self.ingestion_endpoint, data=compressed_batch, headers=self.headers)

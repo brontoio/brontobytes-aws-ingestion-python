@@ -32,6 +32,12 @@ A sample configuration is:
       "dataset": "log-group-logs",
       "collection": "lambdaLogs",
       "log_type": "cloudwatch_log"
+    },
+    "my-clustom-data-in-log-group-name": {
+      "dataset": "log-group-logs",
+      "collection": "MyCustomCollection",
+      "log_type": "cloudwatch_log",
+      "client_type": "FluentD"
     }
   }
 ```
@@ -45,7 +51,7 @@ Notes:
 
 - For logs delivered to AWS S3, only data matching an entry in the configuration is forwarded.
 - For logs delivered to Cloudwatch, `log_type` should be set to `cloudwatch_log`.
-- For logs delivered to AWS S3, `log_type` is a mandatory field. `dataset` and `collection` are optional. Data will be 
+- For logs delivered to AWS S3, `log_type` is a mandatory field. `dataset` and `collection` are optional. Data will be
 forwarded to default Collection and Dataset if `dataset` and `collection` are not set. The possible log_type values are:
   - `bedrock_s3` for Bedrock logs delivered to S3. Note that some Bedrock model invocation logs may be delivered to Cloudwatch too.
   - `vpc_flow_log`
@@ -56,6 +62,9 @@ forwarded to default Collection and Dataset if `dataset` and `collection` are no
   - `clb_access_log`
   - `cf_realtime_access_log`
   - `cf_standard_access_log`
+- `client_type` is optional and should only be set when forwarding log data that is already in a format that should not 
+be altered by this integration, e.g. the data is already in the `FluentD` format. Currently, the only values supported 
+are `FluentD` and `LogStash`.
 - For Cloudwatch logs, entries in the configuration map are optional. If not set, the bronto destination 
 (i.e. `dataset` and `collection`) is so that:  
   - the collection is defined with the `cloudwatch_default_collection` environment variable or the default Bronto 
@@ -73,3 +82,4 @@ logs are being forwarded)
 - ALB
 - VPC Flow Log (version 2 to 5)
 - CloudFront Standard access logs
+- Custom (data is forwarded to Bronto without any modification. Set `client_type` for this case).

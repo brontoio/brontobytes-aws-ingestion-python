@@ -13,6 +13,7 @@ def test_destination_config(monkeypatch):
     assert dest_config.get_dataset(key) == raw_config[key]['dataset']
     assert dest_config.get_collection(key) == raw_config[key]['collection']
     assert dest_config.get_keys() == [key]
+    assert dest_config.get_client_type(key) is None
 
 def test_legacy_destination_config(monkeypatch):
     key = 'some_id'
@@ -69,3 +70,11 @@ def test_attributes_config_malformed(monkeypatch):
 def test_get_keys_no_config():
     dest_config = DestinationConfig()
     assert dest_config.get_keys() == []
+
+def test_destination_config_client_type(monkeypatch):
+    key = 'some_id'
+    raw_config = {key: {'dataset': 'my_dataset', 'collection': 'my_collection', 'log_type': 'my_log_type',
+        'client_type': 'my_client_type'}}
+    monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_config).encode()).decode())
+    dest_config = DestinationConfig()
+    assert dest_config.get_client_type(key) == raw_config[key]['client_type']
