@@ -101,3 +101,6 @@ class DestinationConfig:
 
     def get_cloudwatch_default_collection(self):
         return self.cloudwatch_default_collection
+
+    def get_client_type(self, key):
+        return self._get_attribute_value(key, 'client_type')

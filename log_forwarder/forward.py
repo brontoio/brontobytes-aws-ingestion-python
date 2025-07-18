@@ -35,6 +35,7 @@ def process(event):
         dataset = destination_provider.get_dataset(data_id)
         collection = destination_provider.get_collection(data_id)
         log_type = dest_config.get_log_type(data_id)
+        client_type = dest_config.get_client_type(data_id)
         logger.info('Destination information retrieved. dataset=%s, collection=%s, log_type=%s', dataset,
                     collection, log_type)
         if log_type is None:
@@ -46,8 +47,10 @@ def process(event):
         logger.info('Parser selected. parser=%s', type(parser).__name__)
         attributes = config.get_resource_attributes()
         attributes.update(data_retriever.get_log_attributes_from_payload())
-        bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, dataset, collection)
-        batch = Batch()
+        bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, dataset, collection,
+            client_type)
+        no_formatting = client_type is not None
+        batch = Batch(no_formatting)
         for line in parser.get_parsed_lines():
             batch.add(line)
             if batch.get_batch_size() > dest_config.max_batch_size:
