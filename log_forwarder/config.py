@@ -25,6 +25,7 @@ class Config:
     def __init__(self, event):
         self.filepath = tempfile.NamedTemporaryFile().name
         self.event = event
+        self.path_regexes = os.environ.get('path_regexes')
         raw_attributes = os.environ.get('attributes')
         self.resource_attributes = {}
         if raw_attributes is not None and raw_attributes != '':
@@ -43,6 +44,27 @@ class DestinationConfig:
 
     ONE_MB = 1000000
 
+    @staticmethod
+    def _get_json_config_from_s3(s3_uri, s3_client):
+        bucket_name_and_path = s3_uri.replace('s3://', '').split('/')
+        if len(bucket_name_and_path) < 2:
+            raise Exception('Config S3 URI is malformed. Bucket name or path missing. s3_uri=%s', s3_uri)
+        bucket_name = bucket_name_and_path[0]
+        s3_key = '/'.join(bucket_name_and_path[1:])
+        logger.info('Retrieving configuration from S3. config_s3_uri=%s, bucket_name=%s, s3_key=%s',
+                    s3_uri, bucket_name, s3_key)
+        try:
+            response = s3_client.get_object(
+                Bucket=bucket_name,
+                Key=s3_key,
+            )
+            return json.loads(response['Body'].read())
+        except Exception as e:
+            logger.error('Cannot get destination config from S3. bucket_name=%s, s3_key=%s',
+                         bucket_name, s3_key)
+            raise e
+
+
     def __init__(self):
         self.bronto_api_key = os.environ.get('bronto_api_key')
         self.bronto_endpoint = os.environ.get('bronto_endpoint')
@@ -59,24 +81,22 @@ class DestinationConfig:
             self.destination_config = None
             self.config_s3_uri = os.environ.get('CONFIG_S3_URI')
             if self.config_s3_uri is not None:
-                bucket_name_and_path = self.config_s3_uri.replace('s3://', '').split('/')
-                if len(bucket_name_and_path) < 2:
-                    raise Exception('Config S3 URI is malformed. Bucket name or path missing. s3_uri=%s',
-                                    self.config_s3_uri)
-                bucket_name = bucket_name_and_path[0]
-                s3_key = '/'.join(bucket_name_and_path[1:])
-                logger.info('Retrieving configuration from S3. config_s3_uri=%s, bucket_name=%s, s3_key=%s',self.config_s3_uri, bucket_name, s3_key)
-                self.s3_client = boto3.client('s3')
-                try:
-                    response = self.s3_client.get_object(
-                        Bucket=bucket_name,
-                        Key=s3_key,
-                    )
-                    self.destination_config = json.loads(response['Body'].read())
-                except Exception as e:
-                    logger.error('Cannot get destination config from S3. bucket_name=%s, s3_key=%s',
-                                 bucket_name, s3_key)
-                    raise e
+                s3_client = boto3.client('s3')
+                self.destination_config = DestinationConfig._get_json_config_from_s3(self.config_s3_uri, s3_client)
+        self.paths_regex = []
+        b64_paths_regex_config = os.environ.get('paths_regex')
+        if b64_paths_regex_config is not None:
+            try:
+                self.paths_regex = json.loads(base64.b64decode(b64_paths_regex_config))
+            except json.decoder.JSONDecodeError as e:
+                logger.error('Cannot read paths regex config. Json format expected. error=%s', e)
+                raise e
+        else:
+            self.config_paths_regex_s3_uri = os.environ.get('CONFIG_PATHS_REGEX_S3_URI')
+            if self.config_paths_regex_s3_uri is not None:
+                s3_client = boto3.client('s3')
+                self.paths_regex = DestinationConfig._get_json_config_from_s3(self.config_paths_regex_s3_uri, s3_client)
+        logger.info('Path regexes collected. paths_regex=%s', self.paths_regex)
 
     def _get_attribute_value(self, key, attribute_name):
         return self.destination_config.get(key, {}).get(attribute_name) if self.destination_config is not None else None
@@ -104,3 +124,6 @@ class DestinationConfig:
 
     def get_client_type(self, key):
         return self._get_attribute_value(key, 'client_type')
+
+    def get_paths_regex(self):
+        return self.paths_regex

@@ -3,6 +3,7 @@ import json
 import os
 import base64
 import logging
+import re
 
 from config import Config, DestinationConfig
 from clients import S3Client
@@ -47,6 +48,19 @@ class S3DataRetriever(DataRetriever):
 
     def get_data_id(self):
         raise NotImplementedError()
+
+
+class CustomS3Retriever(S3DataRetriever):
+
+    def __init__(self, data_id, config: Config, bucket_name, s3_key):
+        super().__init__(config, bucket_name, s3_key)
+        self.data_id = data_id
+
+    def get_name(self):
+        return 'Custom'
+
+    def get_data_id(self):
+        return self.data_id
 
 
 class BedrockS3Retriever(S3DataRetriever):
@@ -142,6 +156,7 @@ class DataRetrieverFactory:
                 filename = os.path.basename(record['s3']['object']['key'])
                 bucket_name = record['s3']['bucket']['name']
                 s3_key = record['s3']['object']['key']
+                logger.info('Log data is in S3. bucket_name=%s, s3_key=%s', bucket_name, s3_key)
                 if 'CloudTrail' in s3_key:
                     data_retrievers.append(CloudtrailLogsRetriever(config, bucket_name, s3_key))
                 elif 'elasticloadbalancing' in s3_key:
@@ -154,7 +169,18 @@ class DataRetrieverFactory:
                         dest_config.get_log_type(filename.split('.')[0]) == 'cf_standard_access_log'):
                     data_retrievers.append(CloudfrontLogsRetriever(config, bucket_name, s3_key))
                 else:
-                    data_retrievers.append(S3AccessLogsRetriever(config, bucket_name, s3_key))
+                    retriever_found = False
+                    for path_regex_config in dest_config.get_paths_regex():
+                        path_regex = path_regex_config.get('pattern')
+                        pattern = re.compile(path_regex)
+                        matches = pattern.match(s3_key)
+                        if matches is not None:
+                            dest_config_id = matches.group('dest_config_id')
+                            data_retrievers.append(CustomS3Retriever(dest_config_id, config, bucket_name, s3_key))
+                            retriever_found = True
+                            break
+                    if not retriever_found:
+                        data_retrievers.append(S3AccessLogsRetriever(config, bucket_name, s3_key))
         if 'awslogs' in config.event:
             data_retrievers.append(CloudwatchDataRetriever(config))
         return data_retrievers

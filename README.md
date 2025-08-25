@@ -13,7 +13,17 @@ This lambda function can be configured with the following attributes:
 - `bronto_api_key`: a BrontoBytes account API key
 - `max_batch_size`: the maximum size of an uncompressed payload sent to BrontoBytes. This lambda function compresses 
 the data with gzip. As a rule of thumb, a compression ratio of about 90% can be expected.
-- `destination_config`: a base64 encoded map representing the configuration to where each log should be sent to. 
+- `destination_config`: a base64 encoded map representing the configuration to where each log should be sent to.
+- `paths_regex`: `paths_regex` is a base64-encoded list of objects, each containing a regular expression pattern with a 
+named capture group called `dest_config_id`. This is used for log data delivered to S3 when the S3 object key does not 
+follow standard AWS naming conventions, such as when data is moved between buckets and renamed. In such cases, the 
+default rules for identifying the log type or the originating resource (like a load balancer name) may no longer apply. 
+To handle such cases, the forwarder uses the regex patterns defined in the `paths_regex` field, after applying the 
+default rules (except for S3 Access Logs). It extracts the `dest_config_id` value from the S3 key and looks it up in 
+the `destination_config` map. If a match is found, the corresponding configuration is used. For example, with a decoded 
+paths_regex of `[{'pattern': '[^/]*/(?P<dest_config_id>[^/]+)'}]` and an S3 key like 
+`some_prefix/my_config_id/some_suffix`, the extracted `dest_config_id` would be `my_config_id`, and the matching 
+configuration in `destination_config` below would be applied.
 
 A sample configuration is:
 ```json
@@ -38,6 +48,11 @@ A sample configuration is:
       "collection": "MyCustomCollection",
       "log_type": "cloudwatch_log",
       "client_type": "FluentD"
+    },
+    "my_config_id": {
+      "dataset": "my_dataset",
+      "collection": "MyCustomCollection",
+      "log_type": "default"
     }
   }
 ```
@@ -62,9 +77,11 @@ forwarded to default Collection and Dataset if `dataset` and `collection` are no
   - `clb_access_log`
   - `cf_realtime_access_log`
   - `cf_standard_access_log`
+  - `default` for the case where no parsing is needed (e.g. structured logs in JSON format)
 - `client_type` is optional and should only be set when forwarding log data that is already in a format that should not 
 be altered by this integration, e.g. the data is already in the `FluentD` format. Currently, the only values supported 
-are `FluentD` and `LogStash`.
+are `FluentD` and `LogStash`. This information is passed on to the Bronto backend, for parsing purpose, to indicate 
+the client that the data originated from (e.g. data was sent from a FluentD agent, via Cloudwatch).
 - For Cloudwatch logs, entries in the configuration map are optional. If not set, the bronto destination 
 (i.e. `dataset` and `collection`) is so that:  
   - the collection is defined with the `cloudwatch_default_collection` environment variable or the default Bronto 
@@ -73,7 +90,7 @@ are `FluentD` and `LogStash`.
 - Legacy attributes `logname` and `logset` are being deprecated in favour of `dataset` and `collection`. However, they
 are still accepted in configuration maps for now.
 
-### Supported Log Type
+### Parsing - Supported Log Type
 
 This function can parse keys and values of the following log types:
 - S3 access logs (the lambda function must be deployed in the same account and region as the bucket whose access 
@@ -82,4 +99,5 @@ logs are being forwarded)
 - ALB
 - VPC Flow Log (version 2 to 5)
 - CloudFront Standard access logs
-- Custom (data is forwarded to Bronto without any modification. Set `client_type` for this case).
+
+Data in JSON format or for which `client_type` is set, will be parsed by Bronto's backend. 

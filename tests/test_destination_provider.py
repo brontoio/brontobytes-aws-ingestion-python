@@ -3,7 +3,8 @@ import base64
 from exceptions import LogTypeMissingException
 
 from config import DestinationConfig, Config, CLOUDWATCH_LOG_TYPE
-from data_retriever import CloudwatchDataRetriever, DataRetriever, S3DataRetriever
+from data_retriever import CloudwatchDataRetriever, DataRetriever, S3DataRetriever, CustomS3Retriever, \
+    DataRetrieverFactory
 from destination_provider import DestinationProvider
 
 import pytest
@@ -12,7 +13,7 @@ def _get_data(data_retriever, log_group_name):
     data_retriever.log_group_name = log_group_name
 
 
-def test_s3_requires_log_type_in_config(monkeypatch):
+def test_s3_requires_log_type_in_config():
     bucket_name = 'my_bucket'
     s3_key = 'my_key'
     config = Config({'Records': [{'s3': {'bucket': {'name': bucket_name}, 'object': {'key': s3_key}}}]})
@@ -22,6 +23,21 @@ def test_s3_requires_log_type_in_config(monkeypatch):
     destination_provider = DestinationProvider(dest_config, data_retriever)
     with pytest.raises(LogTypeMissingException) as _:
         destination_provider.get_type(data_id)
+
+
+def test_s3_custom_path():
+    bucket_name = 'my_bucket'
+    expected_data_id = 'my_dest_config_id'
+    s3_key = f'my_key/{expected_data_id}/other_values'
+    config = Config({'Records': [{'s3': {'bucket': {'name': bucket_name}, 'object': {'key': s3_key}}}]})
+    dest_config = DestinationConfig()
+    dest_config.paths_regex = [{'pattern': '[^/]*/(?P<dest_config_id>[^/]+)'}]
+    data_retrievers = DataRetrieverFactory.get_data_retrievers(config, dest_config)
+    assert len(data_retrievers) == 1
+    data_retriever = data_retrievers[0]
+    assert type(data_retriever) == CustomS3Retriever
+    assert data_retriever.get_data_id() == expected_data_id
+
 
 def test_cloudwatch_no_config(monkeypatch):
     log_group_name = 'whatever'
