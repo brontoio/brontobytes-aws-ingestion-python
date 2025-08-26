@@ -78,3 +78,10 @@ def test_destination_config_client_type(monkeypatch):
     monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_config).encode()).decode())
     dest_config = DestinationConfig()
     assert dest_config.get_client_type(key) == raw_config[key]['client_type']
+
+def test_paths_regex_config(monkeypatch):
+    raw_config = [{'pattern': 'my expression', 'type': 'SomeLogType'},
+                  {'pattern': 'my other expression', 'type': 'SomeOtherLogType'}]
+    monkeypatch.setenv('paths_regex', base64.b64encode(json.dumps(raw_config).encode()).decode())
+    dest_config = DestinationConfig()
+    assert dest_config.get_paths_regex() == raw_config
