@@ -22,8 +22,8 @@ CLOUDWATCH_LOG_TYPE = 'cloudwatch_log'
 
 class Config:
 
-    def __init__(self, event):
-        self.filepath = tempfile.NamedTemporaryFile().name
+    def __init__(self, event, filepath):
+        self.filepath = filepath
         self.event = event
         self.path_regexes = os.environ.get('path_regexes')
         raw_attributes = os.environ.get('attributes')
