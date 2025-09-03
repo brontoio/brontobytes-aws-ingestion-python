@@ -1,6 +1,7 @@
 import base64
 import gzip
 import json
+import tempfile
 
 from config import Config
 from data_retriever import CloudwatchDataRetriever, LBAccessLogsRetriever, S3AccessLogsRetriever
@@ -12,15 +13,15 @@ def test_cloudwatch():
     log_stream = 'my_log_stream'
     entries = {'logGroup': group_name, 'logStream': log_stream, 'logEvents': [{'message': 'entry1'}, {'message': 'entry2'}]}
     event = {'awslogs': {'data': base64.b64encode(gzip.compress(json.dumps(entries).encode())).decode()}}
-    config = Config(event)
-    retriever = CloudwatchDataRetriever(config)
-    retriever.get_data()
-    assert (open(config.filepath, 'rb').read().decode().split('\n') ==
-            [entry['message'] for entry in entries['logEvents']])
-    assert retriever.get_data_id() == group_name
-    assert retriever.log_group_name == group_name
-    assert retriever.log_stream == log_stream
-
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config(event, f.name)
+        retriever = CloudwatchDataRetriever(config)
+        retriever.get_data()
+        assert (open(config.filepath, 'rb').read().decode().split('\n') ==
+                [entry['message'] for entry in entries['logEvents']])
+        assert retriever.get_data_id() == group_name
+        assert retriever.log_group_name == group_name
+        assert retriever.log_stream == log_stream
 
 def test_lb_access_logs_retriever():
     lb_id = 'load-balancer-id'
@@ -31,9 +32,10 @@ def test_lb_access_logs_retriever():
         'bucket': {'name': bucket_name},
         'object': {'key': s3_key}
     }}]}
-    config = Config(event)
-    retriever = LBAccessLogsRetriever(config, bucket_name, s3_key)
-    assert retriever.get_data_id() == lb_id
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config(event, f.name)
+        retriever = LBAccessLogsRetriever(config, bucket_name, s3_key)
+        assert retriever.get_data_id() == lb_id
 
 
 def test_s3_access_logs_retriever():
@@ -44,7 +46,8 @@ def test_s3_access_logs_retriever():
         'bucket': {'name': src_bucket},
         'object': {'key': s3_key}
     }}]}
-    config = Config(event)
-    retriever = S3AccessLogsRetriever(config, src_bucket, s3_key)
-    assert retriever.get_data_id() == src_bucket
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config(event, f.name)
+        retriever = S3AccessLogsRetriever(config, src_bucket, s3_key)
+        assert retriever.get_data_id() == src_bucket
 

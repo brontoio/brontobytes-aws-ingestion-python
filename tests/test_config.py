@@ -1,5 +1,7 @@
 import base64
 import json
+import os.path
+import tempfile
 
 from config import DestinationConfig, Config
 
@@ -55,17 +57,20 @@ def test_destination_config_logtype_not_defined(monkeypatch):
 
 def test_attributes_config(monkeypatch):
     monkeypatch.setenv('attributes', 'attr1=value1,attr2=value2')
-    config = Config({})
-    assert config.get_resource_attributes() == {'attr1': 'value1', 'attr2': 'value2'}
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_resource_attributes() == {'attr1': 'value1', 'attr2': 'value2'}
 
 def test_attributes_config_not_defined():
-    config = Config({})
-    assert config.get_resource_attributes() == {}
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_resource_attributes() == {}
 
 def test_attributes_config_malformed(monkeypatch):
     monkeypatch.setenv('attributes', 'attr1=val=ue1,attr2=value2')
-    config = Config({})
-    assert config.get_resource_attributes() == {'attr2': 'value2'}
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_resource_attributes() == {'attr2': 'value2'}
 
 def test_get_keys_no_config():
     dest_config = DestinationConfig()
@@ -85,3 +90,11 @@ def test_paths_regex_config(monkeypatch):
     monkeypatch.setenv('paths_regex', base64.b64encode(json.dumps(raw_config).encode()).decode())
     dest_config = DestinationConfig()
     assert dest_config.get_paths_regex() == raw_config
+
+
+def test_file_is_deleted_on_close():
+    with tempfile.NamedTemporaryFile() as f:
+        filepath = f.name
+        config = Config({}, f.name)
+        assert config.get_resource_attributes() == {}
+    assert filepath is not None and not os.path.exists(filepath)
