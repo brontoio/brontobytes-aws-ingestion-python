@@ -1,7 +1,6 @@
 import json
 import base64
 import os
-import tempfile
 import logging
 from typing import List
 import boto3
@@ -26,6 +25,7 @@ class Config:
         self.filepath = filepath
         self.event = event
         self.path_regexes = os.environ.get('path_regexes')
+        self.aggregator = os.environ.get('aggregator', 'default')
         raw_attributes = os.environ.get('attributes')
         self.resource_attributes = {}
         if raw_attributes is not None and raw_attributes != '':

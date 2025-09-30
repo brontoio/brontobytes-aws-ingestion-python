@@ -23,9 +23,10 @@ class S3Client:
 
 class Batch:
 
-    def __init__(self, no_formatting=False):
+    def __init__(self, max_size: int, no_formatting=False):
         self.batch = []
         self.size = 0
+        self.max_size = max_size
         self.no_formatting = no_formatting
 
     def add(self, line):
@@ -45,6 +46,10 @@ class Batch:
         for log_message in log_messages:
             log_message.update(attributes)
         return '\n'.join([json.dumps(log_message) for log_message in log_messages])
+
+    def reset(self):
+        self.batch = []
+        self.size = 0
 
 
 class BrontoClient:

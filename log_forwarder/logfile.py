@@ -46,7 +46,7 @@ class PlaintextFile(LogFile):
     def get_lines(self):
         with self.file as f:
             for line in f.readlines():
-                yield line.strip()
+                yield line.rstrip()  # we keep spaces at the start as they may be indicative of a stack trace
 
 
 class LogFileFactory:
