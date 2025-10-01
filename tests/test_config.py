@@ -72,6 +72,31 @@ def test_attributes_config_malformed(monkeypatch):
         config = Config({}, f.name)
         assert config.get_resource_attributes() == {'attr2': 'value2'}
 
+def test_tags_config(monkeypatch):
+    monkeypatch.setenv('tags', 'attr1=value1,attr2=value2')
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_tags() == {'attr1': 'value1', 'attr2': 'value2'}
+
+
+def test_tags_config_whitespace_handling(monkeypatch):
+    monkeypatch.setenv('tags', 'attr1 =\tvalue1,      attr2\n=value2')
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_tags() == {'attr1': 'value1', 'attr2': 'value2'}
+
+
+def test_tags_config_not_defined():
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_tags() == {}
+
+def test_tags_config_malformed(monkeypatch):
+    monkeypatch.setenv('tags', 'attr1=val=ue1,attr2=value2')
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        assert config.get_tags() == {'attr2': 'value2'}
+
 def test_get_keys_no_config():
     dest_config = DestinationConfig()
     assert dest_config.get_keys() == []

@@ -1,9 +1,8 @@
 import json
 import base64
 import os
-import tempfile
 import logging
-from typing import List
+from typing import List, Dict
 import boto3
 
 logger = logging.getLogger()
@@ -22,22 +21,33 @@ CLOUDWATCH_LOG_TYPE = 'cloudwatch_log'
 
 class Config:
 
+    @staticmethod
+    def _extract_kvps(property_value: str) -> Dict[str, str]:
+        result = {}
+        if property_value is not None and property_value != '':
+            for raw_kvp in property_value.split(','):
+                kvp = raw_kvp.split("=")
+                if len(kvp) != 2:
+                    logger.error('Malformed tag. Skipping. tag=%s', raw_kvp)
+                    continue
+                result[kvp[0].strip()] = kvp[1].strip()
+        return result
+
+
     def __init__(self, event, filepath):
         self.filepath = filepath
         self.event = event
         self.path_regexes = os.environ.get('path_regexes')
+        raw_tags = os.environ.get('tags')
+        self.tags = Config._extract_kvps(raw_tags)
         raw_attributes = os.environ.get('attributes')
-        self.resource_attributes = {}
-        if raw_attributes is not None and raw_attributes != '':
-            for raw_kvp in raw_attributes.split(','):
-                split_kvp = raw_kvp.split("=")
-                if len(split_kvp) != 2:
-                    logger.error('Malformed attribute. Skipping. attribute=%s', raw_kvp)
-                    continue
-                self.resource_attributes[split_kvp[0]] = split_kvp[1]
+        self.resource_attributes = Config._extract_kvps(raw_attributes)
 
     def get_resource_attributes(self):
         return self.resource_attributes
+
+    def get_tags(self):
+        return self.tags
 
 
 class DestinationConfig:
