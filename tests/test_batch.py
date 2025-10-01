@@ -4,15 +4,16 @@ from clients import Batch
 
 
 def test_add_to_batch():
-    batch = Batch()
+    batch = Batch(1)
     entry = "an entry"
     batch.add(entry)
     assert batch.get_batch_size() == len(entry)
     assert batch.get_data() == [entry]
+    assert batch.max_size == 1
 
 
 def test_get_formatted_batch():
-    batch = Batch()
+    batch = Batch(1)
     entry = "an entry"
     batch.add(entry)
     attributes = {'key': 'value'}
@@ -21,9 +22,16 @@ def test_get_formatted_batch():
     assert json.loads(batch.get_formatted_data(attributes)) == expected
 
 def test_get_formatted_batch_with_no_formatting():
-    batch = Batch(no_formatting=True)
+    batch = Batch(1, no_formatting=True)
     entry = "an entry"
     batch.add(entry)
     attributes = {'key': 'value'}
     assert batch.get_formatted_data(attributes) == entry
 
+def test_reset():
+    batch = Batch(1)
+    entry = "an entry"
+    batch.add(entry)
+    batch.reset()
+    assert batch.batch == []
+    assert batch.size == 0

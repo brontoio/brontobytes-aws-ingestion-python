@@ -2,9 +2,11 @@ import logging
 import tempfile
 import shutil
 
+from aggregator import JavaStackTraceAggregator, AggregatorFactory
 from config import Config, DestinationConfig
 from data_retriever import DataRetrieverFactory
 from destination_provider import DestinationProvider
+from exporter import BrontoExporter
 from parser import ParserFactory
 from clients import BrontoClient, Batch
 from logfile import LogFileFactory
@@ -58,14 +60,10 @@ def process(event):
             bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, dataset, collection,
                 client_type, config.tags)
             no_formatting = client_type is not None
-            batch = Batch(no_formatting)
-            for line in parser.get_parsed_lines():
-                batch.add(line)
-                if batch.get_batch_size() > dest_config.max_batch_size:
-                    bronto_client.send_data(batch, attributes)
-                    batch = Batch()
-            if batch.get_batch_size() > 0:
-                bronto_client.send_data(batch, config.get_resource_attributes())
+            batch = Batch(dest_config.max_batch_size, no_formatting)
+            aggregator = AggregatorFactory.get_aggregator(config.aggregator)
+            exporter = BrontoExporter(bronto_client, parser, batch, aggregator, attributes)
+            exporter.export()
 
 
 def forward_logs(_event, _):

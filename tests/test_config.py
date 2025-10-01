@@ -116,7 +116,6 @@ def test_paths_regex_config(monkeypatch):
     dest_config = DestinationConfig()
     assert dest_config.get_paths_regex() == raw_config
 
-
 def test_file_is_deleted_on_close():
     with tempfile.NamedTemporaryFile() as f:
         filepath = f.name

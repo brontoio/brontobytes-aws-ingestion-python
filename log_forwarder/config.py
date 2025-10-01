@@ -38,6 +38,7 @@ class Config:
         self.filepath = filepath
         self.event = event
         self.path_regexes = os.environ.get('path_regexes')
+        self.aggregator = os.environ.get('aggregator', 'default')
         raw_tags = os.environ.get('tags')
         self.tags = Config._extract_kvps(raw_tags)
         raw_attributes = os.environ.get('attributes')

@@ -15,6 +15,10 @@ This lambda function can be configured with the following attributes:
 where keys and values should only contain alphanumerical character or `-` or `_`.
 - `max_batch_size`: the maximum size of an uncompressed payload sent to BrontoBytes. This lambda function compresses 
 the data with gzip. As a rule of thumb, a compression ratio of about 90% can be expected.
+- `aggregator`: the name of an aggregator to use: either `java_stack_trace` or `default`. This property defaults to 
+`default` if not set. Aggregators aggregate multiline log entries into a single entry. The `default` aggregator is a 
+noop (no entries get aggregated), while the `java_stack_trace` aggregator aggregates Java stack trace entries into a 
+single one.
 - `destination_config`: a base64 encoded map representing the configuration to where each log should be sent to.
 - `paths_regex`: `paths_regex` is a base64-encoded list of objects, each containing a regular expression pattern with a 
 named capture group called `dest_config_id`. This is used for log data delivered to S3 when the S3 object key does not 
