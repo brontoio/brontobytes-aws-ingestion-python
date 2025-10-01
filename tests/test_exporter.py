@@ -14,7 +14,7 @@ class TestBrontoExporter:
     @pytest.fixture()
     def client(self, monkeypatch):
         return BrontoClient('api_key', 'endpoint', 'my_dataset','my_collection',
-                            'my_client_type')
+                            'my_client_type', {})
 
     @pytest.fixture()
     def log_file(self):

@@ -11,6 +11,8 @@ This lambda function can be configured with the following attributes:
 
 - `bronto_endpoint`: the BrontoBytes ingestion endpoint
 - `bronto_api_key`: a BrontoBytes account API key
+- `tags`: a string representing tags to be applied to all destination datasets. The string if of the form `key1=value1,key2=value2,...`, 
+where keys and values should only contain alphanumerical character or `-` or `_`.
 - `max_batch_size`: the maximum size of an uncompressed payload sent to BrontoBytes. This lambda function compresses 
 the data with gzip. As a rule of thumb, a compression ratio of about 90% can be expected.
 - `aggregator`: the name of an aggregator to use: either `java_stack_trace` or `default`. This property defaults to 

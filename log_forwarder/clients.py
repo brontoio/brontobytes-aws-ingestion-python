@@ -54,7 +54,7 @@ class Batch:
 
 class BrontoClient:
 
-    def __init__(self, api_key, ingestion_endpoint, dataset, collection, client_type):
+    def __init__(self, api_key, ingestion_endpoint, dataset, collection, client_type, tags: Dict[str, str]):
         self.api_key = api_key
         self.dataset = dataset
         self.collection = collection
@@ -64,7 +64,8 @@ class BrontoClient:
             'Content-Encoding': 'gzip',
             'Content-Type': 'application/json',
             'User-Agent': 'bronto-aws-integration',
-            'x-bronto-api-key': self.api_key
+            'x-bronto-api-key': self.api_key,
+            'x-bronto-tags': ','.join([f'{key}={value}' for key, value in tags.items()])
         }
         if self.dataset is not None:
             self.headers.update({'x-bronto-service-name': self.dataset})

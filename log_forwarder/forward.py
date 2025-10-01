@@ -58,7 +58,7 @@ def process(event):
             attributes = config.get_resource_attributes()
             attributes.update(data_retriever.get_log_attributes_from_payload())
             bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, dataset, collection,
-                client_type)
+                client_type, config.tags)
             no_formatting = client_type is not None
             batch = Batch(dest_config.max_batch_size, no_formatting)
             aggregator = AggregatorFactory.get_aggregator(config.aggregator)
