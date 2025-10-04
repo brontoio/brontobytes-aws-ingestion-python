@@ -19,7 +19,14 @@ the data with gzip. As a rule of thumb, a compression ratio of about 90% can be 
 `default` if not set. Aggregators aggregate multiline log entries into a single entry. The `default` aggregator is a 
 noop (no entries get aggregated), while the `java_stack_trace` aggregator aggregates Java stack trace entries into a 
 single one.
-- `destination_config`: a base64 encoded map representing the configuration to where each log should be sent to.
+- `destination_config`: a base64 encoded map representing the configuration to where each log should be sent to. 
+`destination_config` takes the following attributes:
+  - `logname` or `dataset`: the Bronto dataset where to send the log data to 
+  - `logset` or `collection`: the Bronto collection that the dataset belongs to 
+  - `log_type`: the type of logs, e.g. cloudwatch, s3_access_log 
+  - `set_individual_subscription`: if set to true, then a log group subscription filter is set. Otherwise, the forwarder relies on an account level subscription filter. 
+  - `subscription_filter_pattern`: the subscription filter pattern to apply to the log group level subscription filter. This overwrites the default level subscription filter pattern.
+  - `tags`: a map whose values are strings, representing tags to be associated to the Bronto dataset, e.g. `{"key1": "value1", "key2": "value2"}`.
 - `paths_regex`: `paths_regex` is a base64-encoded list of objects, each containing a regular expression pattern with a 
 named capture group called `dest_config_id`. This is used for log data delivered to S3 when the S3 object key does not 
 follow standard AWS naming conventions, such as when data is moved between buckets and renamed. In such cases, the 

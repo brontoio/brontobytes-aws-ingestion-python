@@ -41,7 +41,6 @@ def test_s3_custom_path():
         assert type(data_retriever) == CustomS3Retriever
         assert data_retriever.get_data_id() == expected_data_id
 
-
 def test_cloudwatch_no_config(monkeypatch):
     log_group_name = 'whatever'
     with tempfile.NamedTemporaryFile() as f:
@@ -53,6 +52,7 @@ def test_cloudwatch_no_config(monkeypatch):
         assert destination_provider.get_type(log_group_name) == CLOUDWATCH_LOG_TYPE
         assert destination_provider.get_dataset(log_group_name) == log_group_name
         assert destination_provider.get_collection(log_group_name) is None
+        assert destination_provider.get_dataset_tags(log_group_name) == {'aws_log_type': 'cloudwatch_log'}
 
 
 def test_cloudwatch_default_collection(monkeypatch):
@@ -77,8 +77,55 @@ def test_cloudwatch_config_takes_precedence(monkeypatch):
         raw_dest_config = {log_group_name: {'dataset': log_group_name_from_config, 'collection': log_set_from_config}}
         monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_dest_config).encode()).decode())
         dest_config = DestinationConfig()
+        # mock _get_data in order to associate log group name to the data retriever
         monkeypatch.setattr(DataRetriever, 'get_data', lambda: _get_data(data_retriever, log_group_name_from_config))
         destination_provider = DestinationProvider(dest_config, data_retriever)
         assert destination_provider.get_type(log_group_name) == CLOUDWATCH_LOG_TYPE
         assert destination_provider.get_dataset(log_group_name) == log_group_name_from_config
         assert destination_provider.get_collection(log_group_name) == log_set_from_config
+
+
+def test_custom_dataset_tags(monkeypatch):
+    log_group_name = 'whatever'
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        data_retriever = CloudwatchDataRetriever(config)
+        auto_set_tags = {'aws_log_type': 'cloudwatch_log'}
+        dataset_custom_tags = {'key1': 'val1', 'key2': 'val2'}
+        raw_dest_config = {log_group_name: {'tags': dataset_custom_tags}}
+        monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_dest_config).encode()).decode())
+        dest_config = DestinationConfig()
+        destination_provider = DestinationProvider(dest_config, data_retriever)
+        tags = auto_set_tags
+        tags.update(dataset_custom_tags)
+        assert destination_provider.get_dataset_tags(log_group_name) == tags
+
+
+def test_custom_dataset_tags_not_set(monkeypatch):
+    log_group_name = 'whatever'
+    with tempfile.NamedTemporaryFile() as f:
+        config = Config({}, f.name)
+        data_retriever = CloudwatchDataRetriever(config)
+        auto_set_tags = {'aws_log_type': 'cloudwatch_log'}
+        raw_dest_config = {log_group_name: {}}
+        monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_dest_config).encode()).decode())
+        dest_config = DestinationConfig()
+        destination_provider = DestinationProvider(dest_config, data_retriever)
+        assert destination_provider.get_dataset_tags(log_group_name) == auto_set_tags
+
+
+def test_custom_dataset_tags_overwrites_auto_set_tags(monkeypatch):
+    log_group_name = 'whatever'
+    with tempfile.NamedTemporaryFile() as f:
+        auto_set_tag_key = 'aws_log_type'
+        config = Config({}, f.name)
+        data_retriever = CloudwatchDataRetriever(config)
+        auto_set_tags = {auto_set_tag_key: 'cloudwatch_log'}
+        dataset_custom_tags = {'key1': 'val1', auto_set_tag_key: 'val2'}
+        raw_dest_config = {log_group_name: {'tags': dataset_custom_tags}}
+        monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_dest_config).encode()).decode())
+        dest_config = DestinationConfig()
+        destination_provider = DestinationProvider(dest_config, data_retriever)
+        tags = auto_set_tags
+        tags.update(dataset_custom_tags)
+        assert destination_provider.get_dataset_tags(log_group_name) == tags

@@ -33,3 +33,9 @@ class DestinationProvider:
         if self._data_retriever.get_collection_type() == 'cloudwatch':
             return self._config.get_cloudwatch_default_collection()
         return None
+
+    def get_dataset_tags(self, data_id):
+        log_type = self.get_type(data_id)
+        tags = {'aws_log_type': log_type if log_type is not None else 'unknown'}
+        tags.update(self._config.get_dataset_tags(data_id))
+        return tags
