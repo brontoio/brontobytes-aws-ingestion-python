@@ -124,6 +124,10 @@ class DestinationConfig:
             return collection_value
         return self._get_attribute_value(key, 'collection')
 
+    def get_dataset_tags(self, key):
+        dataset_tags_value = self._get_attribute_value(key, 'tags')
+        return dataset_tags_value if dataset_tags_value is not None and isinstance(dataset_tags_value, dict) else {}
+
     def get_log_type(self, key):
         return self._get_attribute_value(key, 'log_type')
 

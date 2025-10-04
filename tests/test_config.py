@@ -8,12 +8,14 @@ from config import DestinationConfig, Config
 
 def test_destination_config(monkeypatch):
     key = 'some_id'
-    raw_config = {key: {'dataset': 'my_dataset', 'collection': 'my_collection', 'log_type': 'my_log_type'}}
+    raw_config = {key: {'dataset': 'my_dataset', 'collection': 'my_collection', 'log_type': 'my_log_type',
+                        'tags': {'key1': 'val1', 'key2': 'val2'}}}
     monkeypatch.setenv('destination_config', base64.b64encode(json.dumps(raw_config).encode()).decode())
     dest_config = DestinationConfig()
     assert dest_config.get_log_type(key) == raw_config[key]['log_type']
     assert dest_config.get_dataset(key) == raw_config[key]['dataset']
     assert dest_config.get_collection(key) == raw_config[key]['collection']
+    assert dest_config.get_dataset_tags(key) == raw_config[key]['tags']
     assert dest_config.get_keys() == [key]
     assert dest_config.get_client_type(key) is None
 
@@ -33,6 +35,7 @@ def test_destination_config_is_optional():
     assert dest_config.get_log_type(key) is None
     assert dest_config.get_dataset(key) is None
     assert dest_config.get_collection(key) is None
+    assert dest_config.get_dataset_tags(key) == {}
 
 def test_destination_config_dataset_not_defined(monkeypatch):
     key = 'some_id'

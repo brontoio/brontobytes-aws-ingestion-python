@@ -44,6 +44,10 @@ def process(event):
             destination_provider = DestinationProvider(dest_config, data_retriever)
             dataset = destination_provider.get_dataset(data_id)
             collection = destination_provider.get_collection(data_id)
+            all_tags = {}
+            all_tags.update(config.get_tags())
+            dataset_tags = destination_provider.get_dataset_tags(data_id)
+            all_tags.update(dataset_tags)
             log_type = dest_config.get_log_type(data_id)
             client_type = dest_config.get_client_type(data_id)
             logger.info('Destination information retrieved. dataset=%s, collection=%s, log_type=%s', dataset,
@@ -58,7 +62,7 @@ def process(event):
             attributes = config.get_resource_attributes()
             attributes.update(data_retriever.get_log_attributes_from_payload())
             bronto_client = BrontoClient(dest_config.bronto_api_key, dest_config.bronto_endpoint, dataset, collection,
-                client_type, config.tags)
+                client_type, all_tags)
             no_formatting = client_type is not None
             batch = Batch(dest_config.max_batch_size, no_formatting)
             aggregator = AggregatorFactory.get_aggregator(config.aggregator)
