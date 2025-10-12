@@ -60,12 +60,13 @@ class BrontoClient:
         self.collection = collection
         self.client_type = client_type
         self.ingestion_endpoint = ingestion_endpoint
+        self.formatted_tags = ','.join([f'{key}={value}' for key, value in tags.items()])
         self.headers = {
             'Content-Encoding': 'gzip',
             'Content-Type': 'application/json',
             'User-Agent': 'bronto-aws-integration',
             'x-bronto-api-key': self.api_key,
-            'x-bronto-tags': ','.join([f'{key}={value}' for key, value in tags.items()])
+            'x-bronto-tags': self.formatted_tags
         }
         if self.dataset is not None:
             self.headers.update({'x-bronto-service-name': self.dataset})
@@ -87,8 +88,8 @@ class BrontoClient:
                 time.sleep(delay_sec)
                 self._send_batch(compressed_batch)
             elif resp.status == 200:
-                logger.info('data sent successfully. collection=%s, dataset=%s', self.collection,
-                            self.dataset)
+                logger.info('data sent successfully. collection=%s, dataset=%s, tags=%s', self.collection,
+                            self.dataset, self.formatted_tags)
             else:
                 logger.error('max attempts reached. attempt=%s, max_attempts=%s', attempt, max_attempts)
                 raise Exception('BrontoClientMaxAttemptReached')
