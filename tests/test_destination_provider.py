@@ -1,11 +1,10 @@
 import json
 import base64
 import tempfile
-from exceptions import LogTypeMissingException
 
 from config import DestinationConfig, Config, CLOUDWATCH_LOG_TYPE
-from data_retriever import CloudwatchDataRetriever, DataRetriever, S3DataRetriever, CustomS3Retriever, \
-    DataRetrieverFactory, logger
+from data_retriever import (CloudwatchDataRetriever, DataRetriever, S3DataRetriever, CustomS3Retriever,
+                            DataRetrieverFactory)
 from destination_provider import DestinationProvider
 
 import pytest
@@ -14,7 +13,7 @@ def _get_data(data_retriever, log_group_name):
     data_retriever.log_group_name = log_group_name
 
 
-def test_s3_requires_log_type_in_config():
+def test_s3_no_log_type_in_config():
     bucket_name = 'my_bucket'
     s3_key = 'my_key'
     with tempfile.NamedTemporaryFile() as f:
@@ -23,8 +22,7 @@ def test_s3_requires_log_type_in_config():
         dest_config = DestinationConfig()
         data_retriever = S3DataRetriever(config, bucket_name, s3_key)
         destination_provider = DestinationProvider(dest_config, data_retriever)
-        with pytest.raises(LogTypeMissingException) as _:
-            destination_provider.get_type(data_id)
+        assert destination_provider.get_log_type(data_id) is None
 
 
 def test_s3_custom_path():
@@ -49,10 +47,10 @@ def test_cloudwatch_no_config(monkeypatch):
         data_retriever = CloudwatchDataRetriever(config)
         monkeypatch.setattr(DataRetriever, 'get_data', lambda: _get_data(data_retriever, log_group_name))
         destination_provider = DestinationProvider(dest_config, data_retriever)
-        assert destination_provider.get_type(log_group_name) == CLOUDWATCH_LOG_TYPE
         assert destination_provider.get_dataset(log_group_name) == log_group_name
         assert destination_provider.get_collection(log_group_name) is None
-        assert destination_provider.get_dataset_tags(log_group_name) == {'aws_log_type': 'cloudwatch_log'}
+        assert destination_provider.get_log_type(log_group_name) == CLOUDWATCH_LOG_TYPE
+        assert destination_provider.get_dataset_tags(log_group_name) == {'aws_log_type': CLOUDWATCH_LOG_TYPE}
 
 
 def test_cloudwatch_default_collection(monkeypatch):
@@ -80,7 +78,6 @@ def test_cloudwatch_config_takes_precedence(monkeypatch):
         # mock _get_data in order to associate log group name to the data retriever
         monkeypatch.setattr(DataRetriever, 'get_data', lambda: _get_data(data_retriever, log_group_name_from_config))
         destination_provider = DestinationProvider(dest_config, data_retriever)
-        assert destination_provider.get_type(log_group_name) == CLOUDWATCH_LOG_TYPE
         assert destination_provider.get_dataset(log_group_name) == log_group_name_from_config
         assert destination_provider.get_collection(log_group_name) == log_set_from_config
 
