@@ -16,7 +16,7 @@ class DataRetriever:
     def get_name(self):
         raise NotImplementedError()
 
-    def get_collection_type(self):
+    def get_source_type(self):
         raise NotImplementedError()
 
     def get_data(self):
@@ -37,7 +37,7 @@ class S3DataRetriever(DataRetriever):
         self.s3_client = S3Client(config.filepath)
         logger.debug('type=%s, bucket=%s, s3_key=%s', self.__class__, self.src_bucket_name, self.src_key)
 
-    def get_collection_type(self):
+    def get_source_type(self):
         return 's3'
 
     def get_name(self):
@@ -122,7 +122,7 @@ class CloudwatchDataRetriever(DataRetriever):
     def get_name(self):
         return 'Cloudwatch'
 
-    def get_collection_type(self):
+    def get_source_type(self):
         return 'cloudwatch'
 
     def __init__(self, config: Config):
