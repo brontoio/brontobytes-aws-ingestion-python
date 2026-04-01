@@ -54,6 +54,8 @@ class Batch:
 
 class BrontoClient:
 
+    NON_RETRYABLE_STATUS_CODES = {400, 401, 403, 404, 405, 410, 422}
+
     def __init__(self, api_key, ingestion_endpoint, dataset, collection, client_type, tags: Dict[str, str]):
         self.api_key = api_key
         self.dataset = dataset
@@ -75,21 +77,23 @@ class BrontoClient:
         if self.client_type is not None:
             self.headers.update({'x-bronto-client': self.client_type})
 
-    def _send_batch(self, compressed_batch):
+    def _send_batch(self, compressed_batch, attempt=0):
         request = urllib.request.Request(self.ingestion_endpoint, data=compressed_batch, headers=self.headers)
-        attempt = 0
         max_attempts = 5
         with urllib.request.urlopen(request) as resp:
-            if resp.status != 200 and attempt < max_attempts:
+            if resp.status == 200:
+                logger.info('data sent successfully. collection=%s, dataset=%s, tags=%s', self.collection,
+                            self.dataset, self.formatted_tags)
+            elif resp.status in self.NON_RETRYABLE_STATUS_CODES:
+                logger.error('Non-retryable error encountered. status=%s, reason=%s', resp.status, resp.reason)
+                raise Exception(f'BrontoClientNonRetryableError: HTTP {resp.status}')
+            elif attempt < max_attempts:
                 attempt += 1
                 delay_sec = attempt * 10
                 logger.warning('Data sending failed. attempt=%s, max_attempts=%s, status=%s, reason=%s',
                                attempt, max_attempts, resp.status, resp.reason)
                 time.sleep(delay_sec)
-                self._send_batch(compressed_batch)
-            elif resp.status == 200:
-                logger.info('data sent successfully. collection=%s, dataset=%s, tags=%s', self.collection,
-                            self.dataset, self.formatted_tags)
+                self._send_batch(compressed_batch, attempt)
             else:
                 logger.error('max attempts reached. attempt=%s, max_attempts=%s', attempt, max_attempts)
                 raise Exception('BrontoClientMaxAttemptReached')
