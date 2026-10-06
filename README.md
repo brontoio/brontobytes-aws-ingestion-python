@@ -90,6 +90,7 @@ forwarded to default Collection and Dataset if `dataset` and `collection` are no
   - `clb_access_log`
   - `cf_realtime_access_log`
   - `cf_standard_access_log`
+  - `waf_log`
   - `default` for the case where no parsing is needed (e.g. structured logs in JSON format)
 - `client_type` is optional and should only be set when forwarding log data that is already in a format that should not 
 be altered by this integration, e.g. the data is already in the `FluentD` format. Currently, the only values supported 

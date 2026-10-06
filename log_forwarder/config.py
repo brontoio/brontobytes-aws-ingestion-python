@@ -17,6 +17,7 @@ CLOUDTRAIL_LOG_TYPE = 'cloudtrail_log'
 VPC_FLOW_LOG_TYPE = 'vpc_flow_log'
 BEDROCK_S3_LOG_TYPE = 'bedrock_s3'
 CLOUDWATCH_LOG_TYPE = 'cloudwatch_log'
+WAF_LOG_TYPE = 'waf_log'
 
 
 class Config:
