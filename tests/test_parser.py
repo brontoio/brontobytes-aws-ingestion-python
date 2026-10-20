@@ -3,7 +3,7 @@ from parser import ParserFactory
 
 from config import (CLOUDFRONT_REALTIME_ACCESS_LOG_TYPE, ALB_ACCESS_LOG_TYPE, NLB_ACCESS_LOG_TYPE,
                     CLOUDFRONT_STANDARD_ACCESS_LOG_TYPE, CLASSIC_LB_ACCESS_LOG_TYPE, CLOUDTRAIL_LOG_TYPE,
-                    S3_ACCESS_LOG_TYPE, CLOUDWATCH_LOG_TYPE)
+                    S3_ACCESS_LOG_TYPE, CLOUDWATCH_LOG_TYPE, VPC_FLOW_LOG_TYPE)
 
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-log-entry-examples
 ALB_ACCESS_LOG_SAMPLE = 'https 2018-07-02T22:23:00.186641Z app/my-loadbalancer/50dc6c495c0c9188 192.168.131.39:2817 10.0.0.1:80 0.086 0.048 0.037 200 200 0 57 "GET https://www.example.com:443/ HTTP/1.1" "curl/7.46.0" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 "Root=1-58337281-1d84f3d73c47ec4e58577259" "www.example.com" "arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012" 1 2018-07-02T22:22:48.364000Z "authenticate,forward" "-" "-" "10.0.0.1:80" "200" "-" "-" TID_1234567890'
@@ -106,6 +106,13 @@ CF_STANDARD_ACCESS_LOG_SAMPLE = '2019-12-04	21:02:31	LAX1	392	192.0.2.100	GET	d1
 
 # https://docs.aws.amazon.com/AmazonS3/latest/userguide/LogFormat.html
 S3_ACCESS_LOG_SAMPLE = '79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be DOC-EXAMPLE-BUCKET1 [06/Feb/2019:00:00:38 +0000] 192.0.2.3 79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be 3E57427F3EXAMPLE REST.GET.VERSIONING - "GET /DOC-EXAMPLE-BUCKET1?versioning HTTP/1.1" 200 - 113 - 7 - "-" "S3Console/0.4" - s9lzHYrFp76ZVxRcpX9+5cjAnEH2ROuNkd2BHfIa6UkFVdtjf5mKR3/eTPFvsiP/XV/VLi31234= SigV4 ECDHE-RSA-AES128-GCM-SHA256 AuthHeader DOC-EXAMPLE-BUCKET1.s3.us-west-1.amazonaws.com TLSV1.2 arn:aws:s3:us-west-1:123456789012:accesspoint/example-AP Yes'
+
+# https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-log-records
+VPC_FLOW_LOG_SAMPLE = '2 834088498142 eni-09b9402a300b43bcb 10.32.1.136 44.201.148.133 36433 123 17 1 76 1792164606 1792164607 ACCEPT OK'
+
+# Delivered via CloudWatch Logs subscription -> Firehose -> S3, where each line is a JSON
+# envelope wrapping the real flow log record under a "message" key.
+VPC_FLOW_LOG_JSON_WRAPPED_SAMPLE = json.dumps({'message': VPC_FLOW_LOG_SAMPLE})
 
 # https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
 CLOUDTRAIL_LOG_SAMPLE = '''{"Records": [{
@@ -230,6 +237,36 @@ def test_s3_access_log_parser():
     parsed = parser.parse(S3_ACCESS_LOG_SAMPLE)
     data = json.loads(parsed)
     assert data['UserAgent'] == 'S3Console/0.4'
+
+
+def test_vpc_flow_log_parser():
+    parser = ParserFactory.get_parser(VPC_FLOW_LOG_TYPE, None)
+    parsed = parser.parse(VPC_FLOW_LOG_SAMPLE)
+    data = json.loads(parsed)
+    assert data['version'] == '2'
+    assert data['account_id'] == '834088498142'
+    assert data['interface_id'] == 'eni-09b9402a300b43bcb'
+    assert data['action'] == 'ACCEPT'
+    assert data['log_status'] == 'OK'
+
+
+def test_vpc_flow_log_parser_unwraps_json_message_envelope():
+    parser = ParserFactory.get_parser(VPC_FLOW_LOG_TYPE, None)
+    parsed = parser.parse(VPC_FLOW_LOG_JSON_WRAPPED_SAMPLE)
+    data = json.loads(parsed)
+    assert data['version'] == '2'
+    assert data['account_id'] == '834088498142'
+    assert data['interface_id'] == 'eni-09b9402a300b43bcb'
+    assert data['action'] == 'ACCEPT'
+    assert data['log_status'] == 'OK'
+
+
+def test_alb_access_log_parser_unwraps_json_message_envelope():
+    parser = ParserFactory.get_parser(ALB_ACCESS_LOG_TYPE, None)
+    parsed = parser.parse(json.dumps({'message': ALB_ACCESS_LOG_SAMPLE}))
+    data = json.loads(parsed)
+    assert data['useragent'] == 'curl/7.46.0'
+    assert data['conn_trace_id'] == 'TID_1234567890'
 
 
 def test_cloudtrail_log_parser():

@@ -19,10 +19,28 @@ class Parser:
         stripped_line = line.strip()
         if self.regex is None:
             return stripped_line
-        parsed = re.match(self.pattern, stripped_line)
+        parsed = re.match(self.pattern, self._unwrap_message(stripped_line))
         if parsed is not None:
             return json.dumps({k: v for k, v in parsed.groupdict().items() if v is not None})
         return stripped_line
+
+    @staticmethod
+    def _unwrap_message(line: str) -> str:
+        """
+        Some log delivery paths (e.g. CloudWatch Logs subscription -> Firehose -> S3) wrap each
+        line in a JSON envelope with the real log line under a "message" key, instead of
+        delivering the raw line directly. Detect and unwrap that case so the regex below still
+        matches the real line.
+        """
+        if not line.startswith('{'):
+            return line
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            return line
+        if isinstance(data, dict) and isinstance(data.get('message'), str):
+            return data['message'].strip()
+        return line
 
     def get_parsed_lines(self):
         for line in self.input_file.get_lines():
